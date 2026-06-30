@@ -19,15 +19,35 @@ interface WeatherData {
 }
 
 const mapWmoCodeToCondition = (code: number, isDay = true): string => {
-  if (code === 0) return isDay ? 'Sunny' : 'Clear';
-  if (code === 1) return isDay ? 'Mostly Sunny' : 'Mostly Clear';
-  if (code === 2) return 'Partly Cloudy';
-  if (code === 3) return 'Cloudy';
-  if (code === 45 || code === 48) return 'Foggy';
-  if ((code >= 51 && code <= 65) || (code >= 80 && code <= 82)) return 'Rainy';
-  if (code >= 71 && code <= 77) return 'Snowy';
-  if (code >= 95 && code <= 99) return 'Stormy';
-  return 'Cloudy';
+  if (code === 0) return isDay ? 'clear-day' : 'clear-night';
+  if (code === 1) return isDay ? 'clear-day' : 'clear-night';
+  if (code === 2) return isDay ? 'partly-cloudy-day' : 'partly-cloudy-night';
+  if (code === 3) return 'overcast';
+  if (code === 45) return 'fog';
+  if (code === 48) return 'mist';
+  if (code === 51) return 'drizzle';
+  if (code === 53) return 'drizzle';
+  if (code === 55) return 'drizzle';
+  if (code === 56) return 'drizzle';
+  if (code === 57) return 'drizzle';
+  if (code === 61) return 'rain';
+  if (code === 63) return 'rain';
+  if (code === 65) return 'heavy-rain';
+  if (code === 66) return 'rain';
+  if (code === 67) return 'heavy-rain';
+  if (code === 71) return 'snow';
+  if (code === 73) return 'snow';
+  if (code === 75) return 'heavy-snow';
+  if (code === 77) return 'sleet';
+  if (code === 80) return 'showers';
+  if (code === 81) return 'showers';
+  if (code === 82) return 'heavy-rain';
+  if (code === 85) return 'snow';
+  if (code === 86) return 'heavy-snow';
+  if (code === 95) return 'thunderstorm';
+  if (code === 96) return 'thunderstorm';
+  if (code === 99) return 'thunderstorm';
+  return 'cloudy';
 };
 
 const formatTimeStr = (isoStr?: string): string => {
@@ -65,7 +85,7 @@ const fetchGeocode = async (cityName: string) => {
 const generateFallbackWeather = (cityName: string): WeatherData => {
   const hash = cityName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const temp = 10 + (hash % 20);
-  const conditions = ['Sunny', 'Cloudy', 'Rainy', 'Foggy', 'Stormy'];
+  const conditions = ['clear-day', 'cloudy', 'rain', 'fog', 'thunderstorm'];
   const condition = conditions[hash % conditions.length];
   const humidity = 40 + (hash % 50);
   const wind = 5 + (hash % 25);
@@ -82,7 +102,7 @@ const generateFallbackWeather = (cityName: string): WeatherData => {
     fallbackHourly.push({
       time: `${displayH} ${ampm}`,
       temp: temp + Math.round(Math.sin(i) * 2),
-      condition: isHDay && condition === 'Sunny' ? 'Sunny' : 'Cloudy',
+      condition: isHDay && condition === 'clear-day' ? 'clear-day' : 'cloudy',
       isDay: isHDay
     });
   }
@@ -90,7 +110,7 @@ const generateFallbackWeather = (cityName: string): WeatherData => {
   return {
     city: cityName.charAt(0).toUpperCase() + cityName.slice(1) + ' (Offline)',
     temp,
-    condition: isCurrentlyNight && condition === 'Sunny' ? 'Clear Night' : condition,
+    condition: isCurrentlyNight && condition === 'clear-day' ? 'clear-night' : condition,
     isDay: !isCurrentlyNight,
     high: temp + 3,
     low: temp - 4,
@@ -115,7 +135,7 @@ export function useWeatherData() {
     return {
       city: 'San Francisco',
       temp: 17,
-      condition: 'Foggy',
+      condition: 'fog',
       isDay: true,
       high: 19,
       low: 12,
@@ -127,16 +147,16 @@ export function useWeatherData() {
       sunrise: '6:04 AM',
       sunset: '8:32 PM',
       hourly: [
-        { time: '12 PM', temp: 16, condition: 'Foggy', isDay: true },
-        { time: '2 PM', temp: 18, condition: 'Mostly Sunny', isDay: true },
-        { time: '4 PM', temp: 19, condition: 'Sunny', isDay: true },
-        { time: '6 PM', temp: 17, condition: 'Mostly Sunny', isDay: true },
-        { time: '8 PM', temp: 14, condition: 'Partly Cloudy', isDay: false },
+        { time: '12 PM', temp: 16, condition: 'fog', isDay: true },
+        { time: '2 PM', temp: 18, condition: 'partly-cloudy-day', isDay: true },
+        { time: '4 PM', temp: 19, condition: 'clear-day', isDay: true },
+        { time: '6 PM', temp: 17, condition: 'partly-cloudy-day', isDay: true },
+        { time: '8 PM', temp: 14, condition: 'partly-cloudy-night', isDay: false },
       ],
       forecast: [
-        { day: 'Thu', temp: 18, condition: 'Foggy' },
-        { day: 'Fri', temp: 19, condition: 'Sunny' },
-        { day: 'Sat', temp: 17, condition: 'Foggy' },
+        { day: 'Thu', temp: 18, condition: 'fog' },
+        { day: 'Fri', temp: 19, condition: 'clear-day' },
+        { day: 'Sat', temp: 17, condition: 'fog' },
       ]
     };
   });

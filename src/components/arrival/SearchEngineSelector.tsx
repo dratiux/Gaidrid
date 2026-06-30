@@ -27,30 +27,40 @@ function getFaviconUrl(domain: string) {
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 }
 
+const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
 async function fetchSuggestions(query: string, engine: string): Promise<string[]> {
   const q = encodeURIComponent(query);
+
   if (engine === 'youtube') {
     try {
-      const res = await fetch(`https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=${q}`);
+      const url = isDev
+        ? `/api/suggest/youtube?client=youtube&ds=yt&q=${q}`
+        : `https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=${q}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (Array.isArray(data) && data.length > 1) return data[1].slice(0, 6);
     } catch {}
   }
+
   try {
-    const res = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${q}`);
+    const url = isDev
+      ? `/api/suggest/google?client=firefox&q=${q}`
+      : `https://suggestqueries.google.com/complete/search?client=firefox&q=${q}`;
+    const res = await fetch(url);
     const data = await res.json();
     if (Array.isArray(data) && data.length > 1) return data[1].slice(0, 6);
   } catch {}
+
   try {
-    const res = await fetch(`https://duckduckgo.com/ac/?q=${q}&type=list`);
+    const url = isDev
+      ? `/api/suggest/duckduckgo?q=${q}&type=list`
+      : `https://duckduckgo.com/ac/?q=${q}&type=list`;
+    const res = await fetch(url);
     const data = await res.json();
     if (Array.isArray(data)) return data.map((item: any) => item.phrase || item).slice(0, 6);
   } catch {}
-  try {
-    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://suggestqueries.google.com/complete/search?client=firefox&q=${q}`)}`);
-    const data = await res.json();
-    if (Array.isArray(data) && data.length > 1) return data[1].slice(0, 6);
-  } catch {}
+
   return [];
 }
 
