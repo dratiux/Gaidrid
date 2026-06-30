@@ -2,8 +2,6 @@
   <img src="public/gaidrid_extension.svg" alt="Gaidrid" width="160" />
   <h1>Gaidrid</h1>
   <p>One Tab. Everything.</p>
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 </div>
 
 ---
@@ -25,14 +23,6 @@ npm run dev
 2. Open `chrome://extensions` or `edge://extensions`
 3. Enable **Developer Mode**
 4. **Load unpacked** → select `dist/`
-
-## Shortcuts
-
-| Keys | Action |
-|------|--------|
-| `G` `N` | Notes |
-| `G` `T` | Todo |
-| `G` `G` | Games |
 
 ## Widgets
 

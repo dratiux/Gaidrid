@@ -14,7 +14,7 @@ interface FinanceWidgetProps {
 }
 
 export default function FinanceWidget({ onRemove }: FinanceWidgetProps) {
-  const { stocks, setStocks, averageChange, fetchAllPrices, loading, getDeterministicFallback } = useFinanceData();
+  const { stocks, setStocks, fetchAllPrices, loading, getDeterministicFallback } = useFinanceData();
   const [showAdd, setShowAdd] = useState(false);
   const [symbol, setSymbol] = useState('');
   const [name, setName] = useState('');
@@ -48,15 +48,6 @@ export default function FinanceWidget({ onRemove }: FinanceWidgetProps) {
     <div id="widget-finance" className="flex flex-col h-full justify-between p-5 select-none">
       <WidgetHeader
         title="Finance"
-        leading={
-          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded font-mono uppercase tracking-widest shrink-0 ${
-            averageChange >= 0
-              ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-              : 'bg-red-500/10 text-red-500 border border-red-500/20'
-          }`}>
-            {averageChange >= 0 ? '+' : ''}{averageChange.toFixed(2)}%
-          </span>
-        }
         actions={
           <>
             <IconButton

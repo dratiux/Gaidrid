@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Compass, ShieldAlert, Cpu, ToggleLeft, Settings, Trash, Check, Plus, AlertTriangle, Calendar, BookOpen, Key, Sparkles, Activity } from 'lucide-react';
+import { Search, Compass, ShieldAlert, ToggleLeft, Settings, Trash, Check, Plus, AlertTriangle, Calendar, BookOpen, Key, Sparkles, Activity } from 'lucide-react';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -8,7 +8,6 @@ interface CommandPaletteProps {
   onAddNote: (title: string, content: string) => void;
   onAddEvent: (title: string) => void;
   onToggleSidebar: () => void;
-  onCycleTheme: () => void;
   onNavigate: (tab: 'home' | 'settings') => void;
   onResetWorkspace: () => void;
   initialStep?: 'list' | 'add-todo' | 'add-note' | 'add-event';
@@ -31,7 +30,6 @@ export default function CommandPalette({
   onAddNote,
   onAddEvent,
   onToggleSidebar,
-  onCycleTheme,
   onNavigate,
   onResetWorkspace,
   initialStep = 'list'
@@ -131,15 +129,6 @@ export default function CommandPalette({
       icon: ToggleLeft,
       action: () => { onToggleSidebar(); onClose(); },
       shortcut: 'S'
-    },
-    {
-      id: 'cycle-theme',
-      category: 'System',
-      title: 'Switch Color Theme',
-      subtitle: 'Cycle professional light and dark palettes',
-      icon: Cpu,
-      action: () => { onCycleTheme(); },
-      shortcut: 'V'
     },
     {
       id: 'reset-desktop',

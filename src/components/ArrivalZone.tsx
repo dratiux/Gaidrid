@@ -220,15 +220,15 @@ export default function ArrivalZone({
       
       {/* Clock and Greeting Header */}
       <section className="space-y-2 animate-fade-in">
-        <h2 className="text-[10px] sm:text-xs font-black text-theme-text-muted uppercase tracking-[0.3em] opacity-80">
-          {getGreeting()}
-        </h2>
         <h1 className="text-6xl sm:text-8xl font-medium tracking-tight text-theme-text font-sans leading-none">
           {formatTime()}
         </h1>
         <div className="text-[11px] font-mono tracking-wider uppercase text-theme-text-muted/80">
           {formatDate()}
         </div>
+        <h2 className="text-[10px] sm:text-xs font-black text-theme-text-muted uppercase tracking-[0.3em] opacity-80">
+          {getGreeting()}
+        </h2>
       </section>
 
       {/* Universal Search Bar */}

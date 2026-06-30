@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { UserSettings, Bookmark, TodoItem, NoteItem, CalendarEvent, StockTicker, FavoriteSite } from '../types';
 import { Settings, CheckCircle, AlertCircle } from 'lucide-react';
-import { THEME_SELECT_OPTIONS, SEARCH_ENGINE_SELECT_OPTIONS } from '../lib/constants';
+import { SEARCH_ENGINE_SELECT_OPTIONS } from '../lib/constants';
 import CustomSelect from './CustomSelect';
+import { ThemePicker } from './ThemePicker';
 
 interface SettingsPanelProps {
   settings: UserSettings;
@@ -199,13 +200,12 @@ export default function SettingsPanel({
 
             {/* Visual Theme Selection */}
             <div>
-              <label className="block text-[10px] uppercase font-black tracking-[0.1em] text-theme-text-muted mb-1.5 font-mono">
+              <label className="block text-[10px] uppercase font-black tracking-[0.1em] text-theme-text-muted mb-2 font-mono">
                 Visual Workspace Theme
               </label>
-              <CustomSelect
+              <ThemePicker
                 value={settings.theme}
                 onChange={(val) => onUpdateSettings({ theme: val as any })}
-                options={THEME_SELECT_OPTIONS}
               />
             </div>
 
@@ -343,7 +343,7 @@ export default function SettingsPanel({
               { keys: ['G', 'H'], label: 'Go to Home' },
               { keys: ['G', 'W'], label: 'Go to Widgets' },
               { keys: ['G', 'N'], label: 'Go to News' },
-              { keys: ['G', 'T'], label: 'Go to Task Board' },
+              { keys: ['G', 'P'], label: 'Go to Sports' },
               { keys: ['G', 'G'], label: 'Go to Games' },
               { keys: ['G', 'S'], label: 'Go to Settings' },
             ].map((shortcut, i) => (
@@ -367,7 +367,6 @@ export default function SettingsPanel({
                 System Controls
               </h4>
               {[
-                { keys: ['V'], label: 'Cycle Dashboard Theme Accents' },
                 { keys: ['R'], label: 'Hard Reset Workspace Data' },
               ].map((shortcut, i) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-theme-input-bg/40 border border-theme-border/45">

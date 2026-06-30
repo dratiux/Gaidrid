@@ -17,7 +17,7 @@ export function WidgetSearchBar({
 }: WidgetSearchBarProps) {
   return (
     <div className={`relative flex items-center bg-theme-input-bg/35 border border-theme-border/30 rounded-xl px-2.5 py-1.5 transition-all focus-within:border-theme-accent/40 focus-within:ring-2 focus-within:ring-theme-accent/5 ${className}`}>
-      <Search size={12} className="text-theme-text-muted/50 shrink-0" />
+      <Search size={12} className="text-theme-text-muted shrink-0" />
       <input
         type="text"
         placeholder={placeholder}

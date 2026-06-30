@@ -144,6 +144,7 @@ export default function WeatherWidget({ onRemove }: WeatherWidgetProps) {
               icon={<MapPin size={12} />}
               label="Change location"
               title="Change Location"
+              className="!text-theme-text-muted hover:!text-theme-text"
             />
             {onRemove && (
               <IconButton

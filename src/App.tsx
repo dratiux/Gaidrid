@@ -179,7 +179,7 @@ export default function App() {
 
       const key = e.key.toLowerCase();
       
-      // Chords sequence (g then h/w/s/a)
+      // Chords sequence (g then h/w/n/p/g/s)
       if (lastKey === 'g') {
         if (key === 'h') {
           e.preventDefault();
@@ -188,6 +188,13 @@ export default function App() {
             return;
           }
           setTab('home');
+        } else if (key === 'p') {
+          e.preventDefault();
+          if (!settings.username || !settings.username.trim()) {
+            alert('Name is required. Please set your name in Settings.');
+            return;
+          }
+          setTab('sports');
         } else if (key === 's') {
           e.preventDefault();
           setTab('settings');
@@ -198,24 +205,6 @@ export default function App() {
             return;
           }
           setTab('widgets');
-        } else if (key === 'a') {
-          e.preventDefault();
-          if (!settings.username || !settings.username.trim()) {
-            alert('Name is required. Please set your name in Settings.');
-            return;
-          }
-          setTab('home');
-          // Highlight and scroll to Pomodoro
-          setTimeout(() => {
-            const pomodoroEl = document.getElementById('widget-pomodoro');
-            if (pomodoroEl) {
-              pomodoroEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              pomodoroEl.classList.add('ring-2', 'ring-theme-accent', 'ring-offset-2', 'ring-offset-theme-bg');
-              setTimeout(() => {
-                pomodoroEl.classList.remove('ring-2', 'ring-theme-accent', 'ring-offset-2', 'ring-offset-theme-bg');
-              }, 2000);
-            }
-          }, 150);
         } else if (key === 'n') {
           e.preventDefault();
           if (!settings.username || !settings.username.trim()) {
@@ -223,23 +212,6 @@ export default function App() {
             return;
           }
           setTab('news');
-        } else if (key === 't') {
-          e.preventDefault();
-          if (!settings.username || !settings.username.trim()) {
-            alert('Name is required. Please set your name in Settings.');
-            return;
-          }
-          setTab('widgets');
-          setTimeout(() => {
-            const todoEl = document.getElementById('widget-todo');
-            if (todoEl) {
-              todoEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              todoEl.classList.add('ring-2', 'ring-theme-accent', 'ring-offset-2', 'ring-offset-theme-bg');
-              setTimeout(() => {
-                todoEl.classList.remove('ring-2', 'ring-theme-accent', 'ring-offset-2', 'ring-offset-theme-bg');
-              }, 2000);
-            }
-          }, 150);
         } else if (key === 'g') {
           e.preventDefault();
           if (!settings.username || !settings.username.trim()) {
@@ -261,10 +233,7 @@ export default function App() {
       }
 
       // Single key shortcuts
-      if (key === 'v') {
-        e.preventDefault();
-        handleCycleTheme();
-      } else if (key === 'r') {
+      if (key === 'r') {
         e.preventDefault();
         if (confirm('Are you sure you want to reset all data?')) {
           handleResetWorkspace();
@@ -470,26 +439,6 @@ export default function App() {
     localStorage.removeItem('gaidrid_custom_categories');
   };
 
-  const handleCycleTheme = () => {
-    const themes: UserSettings['theme'][] = [
-      'gaidrid-dark',
-      'gaidrid-light',
-      'tokyo-night',
-      'catppuccin-mocha',
-      'dracula',
-      'rose-pine',
-      'nord',
-      'ayu-mirage',
-      'everforest',
-      'github-dimmed',
-      'synthwave-84',
-      'one-dark-pro'
-    ];
-    const currentIdx = themes.indexOf(settings.theme);
-    const nextTheme = themes[currentIdx !== -1 ? (currentIdx + 1) % themes.length : 0];
-    handleUpdateSettings({ theme: nextTheme });
-  };
-
   return (
     <div id="gaidrid-root" className="min-h-screen flex text-brand-primary selection:bg-brand-accent w-full relative">
       
@@ -659,7 +608,7 @@ export default function App() {
           currentTab={tab}
           icon={<Trophy size={20} />}
           label="Sports"
-          shortcut="G+S"
+          shortcut="G+P"
           onClick={() => {
             if (tab === 'settings' && (!settings.username || !settings.username.trim())) {
               alert('Name is required. Please set your name in Settings.');

@@ -1,12 +1,17 @@
-import React from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2 } from 'lucide-react';
 
-const SHORTCUTS = [
-  { keys: ['G', 'H'], label: 'Switch Viewport to Workspace Home' },
-  { keys: ['G', 'S'], label: 'Go to System Settings Panel' },
-  { keys: ['V'], label: 'Quick cycle theme accent colors' },
-] as const;
+const NAV_SHORTCUTS = [
+  { keys: ['G', 'H'], label: 'Go to Home' },
+  { keys: ['G', 'W'], label: 'Go to Widgets' },
+  { keys: ['G', 'N'], label: 'Go to News' },
+  { keys: ['G', 'P'], label: 'Go to Sports' },
+  { keys: ['G', 'G'], label: 'Go to Games' },
+  { keys: ['G', 'S'], label: 'Go to Settings' },
+];
+
+const ACTION_SHORTCUTS = [
+  { keys: ['R'], label: 'Reset workspace' },
+];
 
 export default function ShortcutsStep() {
   return (
@@ -16,10 +21,10 @@ export default function ShortcutsStep() {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.2 }}
-      className="space-y-5 text-center md:text-left"
+      className="space-y-4"
     >
       <div className="space-y-1.5">
-        <h2 className="text-lg font-black tracking-tight text-theme-text uppercase flex items-center gap-2 justify-center md:justify-start">
+        <h2 className="text-lg font-black tracking-tight text-theme-text uppercase">
           Chords & Navigation
         </h2>
         <p className="text-theme-text-muted text-[11px]">
@@ -27,25 +32,46 @@ export default function ShortcutsStep() {
         </p>
       </div>
 
-      <div className="space-y-2.5">
-        {SHORTCUTS.map((shortcut, idx) => (
-          <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-theme-input-bg/40 border border-theme-border/45">
-            <span className="text-xs font-semibold text-theme-text text-left">{shortcut.label}</span>
-            <div className="flex gap-1">
-              {shortcut.keys.map((k, kIdx) => (
-                <kbd key={kIdx} className="font-mono font-black text-[9px] bg-theme-input-bg px-2 py-0.5 rounded border border-theme-border text-theme-text">
-                  {k}
-                </kbd>
-              ))}
-            </div>
+      <div className="space-y-3 max-h-[260px] overflow-y-auto pr-1 scrollbar-thin">
+        {/* Navigation */}
+        <div>
+          <span className="text-[9px] font-black uppercase tracking-widest text-theme-text-muted mb-1.5 block">Navigation</span>
+          <div className="space-y-1">
+            {NAV_SHORTCUTS.map((shortcut, idx) => (
+              <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-theme-input-bg/30 border border-theme-border/30">
+                <span className="text-[10px] font-semibold text-theme-text">{shortcut.label}</span>
+                <div className="flex gap-1">
+                  {shortcut.keys.map((k, kIdx) => (
+                    <kbd key={kIdx} className="font-mono font-black text-[8px] bg-theme-input-bg px-1.5 py-0.5 rounded border border-theme-border/60 text-theme-text">
+                      {k}
+                    </kbd>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* Actions */}
+        <div>
+          <span className="text-[9px] font-black uppercase tracking-widest text-theme-text-muted mb-1.5 block">Actions</span>
+          <div className="space-y-1">
+            {ACTION_SHORTCUTS.map((shortcut, idx) => (
+              <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-theme-input-bg/30 border border-theme-border/30">
+                <span className="text-[10px] font-semibold text-theme-text">{shortcut.label}</span>
+                <div className="flex gap-1">
+                  {shortcut.keys.map((k, kIdx) => (
+                    <kbd key={kIdx} className="font-mono font-black text-[8px] bg-theme-input-bg px-1.5 py-0.5 rounded border border-theme-border/60 text-theme-text">
+                      {k}
+                    </kbd>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 bg-theme-accent/5 border border-theme-accent/25 text-theme-text p-3 rounded-2xl text-[10px] font-bold text-left">
-        <CheckCircle2 size={13} className="text-theme-accent shrink-0" />
-        <span>Setup complete! Click 'Launch Workspace' to begin customized operations.</span>
-      </div>
     </motion.div>
   );
 }
