@@ -9,6 +9,13 @@
   "permissions": [
     "storage"
   ],
+  "host_permissions": [
+    "https://duckduckgo.com/*",
+    "https://suggestqueries.google.com/*",
+    "https://www.google.com/*",
+    "https://api.open-meteo.com/*",
+    "https://geocoding-api.open-meteo.com/*"
+  ],
   "icons": {
     "32": "gaidrid_32.png",
     "64": "gaidrid_64.png",

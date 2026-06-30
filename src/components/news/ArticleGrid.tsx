@@ -29,10 +29,10 @@ function getRelativeTime(dateStr: string): string {
 }
 
 export default function ArticleGrid({ articles, loading, error, onRetry }: ArticleGridProps) {
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [visibleCount, setVisibleCount] = useState(20);
 
   useEffect(() => {
-    setVisibleCount(10);
+    setVisibleCount(20);
   }, [articles]);
 
   if (loading) {

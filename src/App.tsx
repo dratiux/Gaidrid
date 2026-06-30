@@ -238,6 +238,13 @@ export default function App() {
         if (confirm('Are you sure you want to reset all data?')) {
           handleResetWorkspace();
         }
+      } else if (key === '/') {
+        e.preventDefault();
+        const searchInput = document.getElementById('global-search-input') as HTMLInputElement | null;
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
       }
     };
 

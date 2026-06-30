@@ -17,10 +17,10 @@ export default function ScoreboardGrid({
   onTogglePin,
   onSelectEvent,
 }: ScoreboardGridProps) {
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [visibleCount, setVisibleCount] = useState(20);
 
   useEffect(() => {
-    setVisibleCount(10);
+    setVisibleCount(20);
   }, [sortedEvents]);
 
   return (

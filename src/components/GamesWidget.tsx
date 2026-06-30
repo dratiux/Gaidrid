@@ -85,7 +85,7 @@ export default function GamesWidget({ onRemove, onOpenGame, onNavigate, onContex
 
   const fetchGames = async () => {
     try {
-      const res = await fetch(`${GAMEMONETIZE_API}?format=json&amount=30&type=html5`);
+      const res = await fetch(`${GAMEMONETIZE_API}?format=json&amount=100&type=html5`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {

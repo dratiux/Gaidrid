@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bookmark, FavoriteSite } from '../types';
-import { ExternalLink, Plus, Trash2, X, Star, History, Pin, Search, BookmarkCheck } from 'lucide-react';
+import { ExternalLink, Plus, X, Star, History, Pin, Search, BookmarkCheck } from 'lucide-react';
 import ModalOverlay from './ModalOverlay';
 import { WidgetHeader } from './ui/WidgetHeader';
 import { WidgetSearchBar } from './ui/WidgetSearchBar';
@@ -191,13 +191,6 @@ export default function BookmarksWidget({
     }
   };
 
-  // Clear all recent history
-  const handleClearAllHistory = () => {
-    if (confirm('Are you sure you want to clear your recently visited tabs history?')) {
-      saveRecentVisits([]);
-    }
-  };
-
   // Filter lists based on search
   const filteredRecent = recentVisits.filter(
     (v) =>
@@ -241,15 +234,6 @@ export default function BookmarksWidget({
                 icon={<X size={12} />}
                 label="Remove bookmarks widget"
                 title="Remove Widget"
-              />
-            )}
-            {activeTab === 'recent' && recentVisits.length > 0 && (
-              <IconButton
-                onClick={handleClearAllHistory}
-                variant="danger"
-                icon={<Trash2 size={12} />}
-                label="Clear all history"
-                title="Clear History"
               />
             )}
           </>

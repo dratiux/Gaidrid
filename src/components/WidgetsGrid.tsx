@@ -255,13 +255,12 @@ export default function WidgetsGrid({
       {visibleWidgets.map((widgetId) => {
         const isDragging = draggedId === widgetId;
         const isDragOver = dragOverId === widgetId;
-        const isAnyModalOpen = typeof document !== 'undefined' && !!document.querySelector('.fixed.inset-0');
         
         return (
           <div
             key={widgetId}
             id={`grid-cell-${widgetId}`}
-            draggable={!isAnyModalOpen}
+            draggable
             onDragStart={(e) => handleDragStart(e, widgetId)}
             onDragOver={(e) => handleDragOver(e, widgetId)}
             onDragLeave={handleDragLeave}

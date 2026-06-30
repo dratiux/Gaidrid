@@ -51,7 +51,7 @@ export interface UserSettings {
   theme: 'gaidrid-light' | 'gaidrid-dark' | 'tokyo-night' | 'catppuccin-mocha' | 'dracula' | 'rose-pine' | 'nord' | 'ayu-mirage' | 'everforest' | 'github-dimmed' | 'synthwave-84' | 'one-dark-pro' | 'light' | 'dark' | 'slate';
   username: string;
   greetingType: 'standard' | 'formal' | 'casual' | 'philosophical';
-  clockFormat: '12h' | '24h' | 'detailed';
+  clockFormat: '12h' | '24h' | 'analog';
   showSeconds: boolean;
   searchEngine: 'google' | 'duckduckgo' | 'bing' | 'github' | 'gemini';
   activeWidgets: string[]; // ids of widgets enabled

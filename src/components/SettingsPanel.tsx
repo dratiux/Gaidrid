@@ -235,7 +235,7 @@ export default function SettingsPanel({
                   options={[
                     { value: "12h", label: "12-Hour" },
                     { value: "24h", label: "24-Hour" },
-                    { value: "detailed", label: "Date & time" }
+                    { value: "analog", label: "Analog" }
                   ]}
                 />
               </div>

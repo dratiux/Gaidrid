@@ -13,6 +13,150 @@ import PopularLinksModal from './arrival/PopularLinksModal';
 import CategoryFilterBar from './arrival/CategoryFilterBar';
 import { CATEGORY_LABELS, getCategoryForSite } from './arrival/constants';
 
+function AnalogClock({ time }: { time: Date }) {
+  const hours = time.getHours() % 12;
+  const minutes = time.getMinutes();
+  const seconds = time.getSeconds();
+
+  const hourDeg = hours * 30 + minutes * 0.5;
+  const minuteDeg = minutes * 6;
+  const secondDeg = seconds * 6;
+
+  const size = 160;
+  const center = size / 2;
+  const outerR = center - 4;
+  const hourTickOuter = outerR;
+  const hourTickInner = outerR - 10;
+  const minTickOuter = outerR;
+  const minTickInner = outerR - 5;
+  const numeralR = outerR - 22;
+
+  const romanNumerals = ['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      {/* Minute ticks */}
+      {Array.from({ length: 60 }).map((_, i) => {
+        if (i % 5 === 0) return null;
+        const angle = (i * 6 - 90) * (Math.PI / 180);
+        const x1 = center + minTickOuter * Math.cos(angle);
+        const y1 = center + minTickOuter * Math.sin(angle);
+        const x2 = center + minTickInner * Math.cos(angle);
+        const y2 = center + minTickInner * Math.sin(angle);
+        return (
+          <svg key={`m${i}`} className="absolute inset-0" width={size} height={size}>
+            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--theme-text-muted)" strokeWidth={0.5} opacity={0.2} />
+          </svg>
+        );
+      })}
+
+      {/* Hour ticks */}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const angle = (i * 30 - 90) * (Math.PI / 180);
+        const x1 = center + hourTickOuter * Math.cos(angle);
+        const y1 = center + hourTickOuter * Math.sin(angle);
+        const x2 = center + hourTickInner * Math.cos(angle);
+        const y2 = center + hourTickInner * Math.sin(angle);
+        return (
+          <svg key={`h${i}`} className="absolute inset-0" width={size} height={size}>
+            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--theme-text-muted)" strokeWidth={1} opacity={0.45} />
+          </svg>
+        );
+      })}
+
+      {/* Roman numerals at 12, 3, 6, 9 */}
+      {[0, 3, 6, 9].map((idx) => {
+        const angle = (idx * 30 - 90) * (Math.PI / 180);
+        const x = center + numeralR * Math.cos(angle);
+        const y = center + numeralR * Math.sin(angle);
+        return (
+          <span
+            key={idx}
+            className="absolute font-serif text-theme-text-muted/50"
+            style={{
+              left: x,
+              top: y,
+              transform: 'translate(-50%, -50%)',
+              fontSize: 12,
+              fontWeight: 400,
+              letterSpacing: '0.08em',
+            }}
+          >
+            {romanNumerals[idx * 1]}
+          </span>
+        );
+      })}
+
+      {/* Hour hand — tapered wedge */}
+      <svg
+        className="absolute origin-bottom"
+        style={{
+          width: 20,
+          height: 44,
+          left: center - 10,
+          bottom: center,
+          transform: `rotate(${hourDeg}deg)`,
+        }}
+        viewBox="0 0 20 44"
+      >
+        <path
+          d="M10 0 L14 38 L10 44 L6 38 Z"
+          fill="var(--theme-text)"
+        />
+      </svg>
+
+      {/* Minute hand — slender tapered */}
+      <svg
+        className="absolute origin-bottom"
+        style={{
+          width: 14,
+          height: 56,
+          left: center - 7,
+          bottom: center,
+          transform: `rotate(${minuteDeg}deg)`,
+        }}
+        viewBox="0 0 14 56"
+      >
+        <path
+          d="M7 0 L10 48 L7 56 L4 48 Z"
+          fill="var(--theme-text)"
+          opacity={0.65}
+        />
+      </svg>
+
+      {/* Second hand — thin needle */}
+      <svg
+        className="absolute origin-bottom"
+        style={{
+          width: 8,
+          height: 60,
+          left: center - 4,
+          bottom: center,
+          transform: `rotate(${secondDeg}deg)`,
+        }}
+        viewBox="0 0 8 60"
+      >
+        <path
+          d="M4 0 L5.5 52 L4 60 L2.5 52 Z"
+          fill="var(--theme-accent)"
+        />
+      </svg>
+
+      {/* Center dot */}
+      <div
+        className="absolute rounded-full"
+        style={{
+          width: 6,
+          height: 6,
+          left: center - 3,
+          top: center - 3,
+          backgroundColor: 'var(--theme-accent)',
+        }}
+      />
+    </div>
+  );
+}
+
 interface ArrivalZoneProps {
   settings: UserSettings;
   favorites: FavoriteSite[];
@@ -126,22 +270,15 @@ export default function ArrivalZone({
     const seconds = String(time.getSeconds()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
 
-    if (settings.clockFormat === '12h') {
+    if (settings.clockFormat === 'analog') {
+      return null;
+    } else if (settings.clockFormat === '12h') {
       hours = hours % 12;
       hours = hours ? hours : 12;
-      return `${hours}:${minutes}${settings.showSeconds ? `:${seconds}` : ''} ${ampm}`;
-    } else if (settings.clockFormat === 'detailed') {
-      const options: Intl.DateTimeFormatOptions = { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric' 
-      };
-      const dateStr = time.toLocaleDateString('en-US', options);
-      const h24 = String(hours).padStart(2, '0');
-      return `${dateStr} • ${h24}:${minutes}${settings.showSeconds ? `:${seconds}` : ''}`;
+      return { main: `${hours}:${minutes}`, period: ampm, seconds: settings.showSeconds ? seconds : null };
     } else {
       const h24 = String(hours).padStart(2, '0');
-      return `${h24}:${minutes}${settings.showSeconds ? `:${seconds}` : ''}`;
+      return { main: `${h24}:${minutes}`, period: null, seconds: settings.showSeconds ? seconds : null };
     }
   };
 
@@ -216,17 +353,39 @@ export default function ArrivalZone({
   };
 
   return (
-    <div id="arrival-zone" className="w-full flex flex-col items-center justify-center text-center py-8 px-4 max-w-4xl mx-auto select-none gap-6">
+    <div id="arrival-zone" className="w-full flex flex-col items-center justify-center text-center py-10 px-4 max-w-4xl mx-auto select-none gap-8">
       
       {/* Clock and Greeting Header */}
-      <section className="space-y-2 animate-fade-in">
-        <h1 className="text-6xl sm:text-8xl font-medium tracking-tight text-theme-text font-sans leading-none">
-          {formatTime()}
-        </h1>
+      <section className="space-y-3 animate-fade-in">
+        {settings.clockFormat === 'analog' ? (
+          <div className="flex justify-center">
+            <AnalogClock time={time} />
+          </div>
+        ) : (() => {
+          const t = formatTime();
+          if (!t) return null;
+          return (
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-7xl sm:text-9xl font-light tracking-tighter text-theme-text font-sans leading-none tabular-nums">
+                {t.main}
+              </span>
+              {t.seconds && (
+                <span className="text-7xl sm:text-9xl font-light text-theme-text-muted/50 tabular-nums leading-none">
+                  :{t.seconds}
+                </span>
+              )}
+              {t.period && (
+                <span className="text-lg sm:text-xl font-medium text-theme-text-muted/60 self-end mb-2 ml-0.5">
+                  {t.period}
+                </span>
+              )}
+            </div>
+          );
+        })()}
         <div className="text-[11px] font-mono tracking-wider uppercase text-theme-text-muted/80">
           {formatDate()}
         </div>
-        <h2 className="text-[10px] sm:text-xs font-black text-theme-text-muted uppercase tracking-[0.3em] opacity-80">
+        <h2 className="text-[10px] sm:text-xs font-medium text-theme-text-muted uppercase tracking-[0.2em] italic opacity-60">
           {getGreeting()}
         </h2>
       </section>
@@ -281,7 +440,6 @@ export default function ArrivalZone({
               const siteCategory = getCategoryForSite(fav, customCategories);
               const isDragging = draggedFavId === fav.id;
               const isDragOver = dragOverFavId === fav.id;
-              const isAnyModalOpen = typeof document !== 'undefined' && !!document.querySelector('.fixed.inset-0');
               return (
                 <div
                   key={fav.id}
@@ -293,42 +451,25 @@ export default function ArrivalZone({
                       ? 'border-theme-accent ring-2 ring-theme-accent/20 scale-[0.99] opacity-85'
                       : 'border-theme-border/50 hover:border-theme-accent/60 hover:bg-theme-card/80 hover:scale-[1.03] active:scale-[0.98]'
                   }`}
-                  draggable={!isAnyModalOpen}
+                  draggable
                   onDragStart={(e) => handleFavDragStart(e, fav.id)}
                   onDragOver={(e) => handleFavDragOver(e, fav.id)}
                   onDragEnd={handleFavDragEnd}
                   onDrop={(e) => handleFavDrop(e, fav.id)}
                 >
-                  {/* Actions shortcut panel on hover */}
-                  <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
-                    {activeCategoryFilter !== 'Favorite' && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onDeleteFavorite(fav.id);
-                        }}
-                        className="p-1 rounded-md bg-theme-input-bg border border-theme-border/40 text-theme-text-muted hover:text-red-500 hover:border-red-500/20 cursor-pointer"
-                        title="Delete Bookmark Shortcut"
-                      >
-                        <X size={10} className="stroke-[2.5]" />
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onToggleFavorite(fav.id);
-                      }}
-                      className="p-1 rounded-md bg-theme-input-bg border border-theme-border/40 text-theme-text-muted hover:text-yellow-500 hover:border-yellow-500/20 cursor-pointer"
-                      title={fav.isFavorite === true ? "Remove from Favorites" : "Add to Favorites"}
-                    >
-                      <Star size={10} className={fav.isFavorite === true ? "fill-yellow-500 text-yellow-500" : ""} />
-                    </button>
-                  </div>
+                  {/* Favorite star — top right on hover */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onToggleFavorite(fav.id);
+                    }}
+                    className="absolute top-1.5 right-1.5 p-1 rounded-md bg-theme-input-bg border border-theme-border/40 text-theme-text-muted hover:text-yellow-500 hover:border-yellow-500/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                    title={fav.isFavorite === true ? "Unfavorite" : "Favorite"}
+                  >
+                    <Star size={10} className={fav.isFavorite === true ? "fill-yellow-500 text-yellow-500" : ""} />
+                  </button>
 
                   <a
                     href={fav.url}
@@ -355,7 +496,7 @@ export default function ArrivalZone({
               );
             })}
 
-          {/* Inline Add Bookmark Custom Shape */}
+          {/* Inline Add Bookmark */}
           <button
             type="button"
             onClick={() => setShowAddFav(true)}
@@ -373,12 +514,12 @@ export default function ArrivalZone({
           </button>
         </div>
 
-        {/* Directory Button bottom row */}
-        <div className="flex items-center justify-center mt-5">
+        {/* Add More Links */}
+        <div className="flex items-center justify-center mt-4">
           <button
             type="button"
             onClick={() => setShowAddMoreModal(true)}
-            className="flex items-center gap-1.5 text-[9px] uppercase font-mono font-black tracking-widest px-4 py-2 rounded-xl bg-theme-card/50 border border-theme-border/70 text-theme-text-muted hover:text-theme-accent hover:border-theme-accent/50 hover:bg-theme-card/85 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 text-[9px] uppercase font-mono font-bold tracking-widest px-4 py-2 rounded-xl bg-theme-card/40 border border-theme-border/50 text-theme-text-muted hover:text-theme-accent hover:border-theme-accent/40 hover:bg-theme-card/80 transition-all cursor-pointer"
           >
             Add More Links
           </button>

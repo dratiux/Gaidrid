@@ -33,7 +33,7 @@ export default function SportsWidget({ onRemove, onNavigate }: SportsWidgetProps
   });
 
   const currentLeagueInfo = LEAGUES.find(l => l.id === selectedLeague) || LEAGUES[0];
-  const [visibleCount, setVisibleCount] = useState(6);
+  const [visibleCount, setVisibleCount] = useState(15);
 
   useEffect(() => {
     fetchScores(true); // show spinner on manual league switch

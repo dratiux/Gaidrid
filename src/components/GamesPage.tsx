@@ -67,7 +67,7 @@ export default function GamesPage({ onOpenGame, activeGameId, onContextMenuGame 
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [visibleCount, setVisibleCount] = useState<number>(12);
+  const [visibleCount, setVisibleCount] = useState<number>(24);
 
   useEffect(() => {
     fetchGames();
@@ -80,7 +80,7 @@ export default function GamesPage({ onOpenGame, activeGameId, onContextMenuGame 
   const fetchGames = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${GAMEMONETIZE_API}?format=json&amount=60&type=html5`);
+      const res = await fetch(`${GAMEMONETIZE_API}?format=json&amount=100&type=html5`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {

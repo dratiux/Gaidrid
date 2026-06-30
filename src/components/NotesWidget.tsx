@@ -152,7 +152,7 @@ export default function NotesWidget({ notes, onAddNote, onUpdateNote, onDeleteNo
           )}
 
           {/* List Area */}
-          <div className="flex-1 overflow-y-auto max-h-[190px] pr-0.5 space-y-2 scrollbar-none">
+          <div className="flex-1 overflow-y-auto pr-0.5 space-y-2 scrollbar-none">
             {filteredNotes.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center py-10 opacity-70">
                 <FileText size={20} className="text-theme-text-muted/50 mb-1.5" />
@@ -173,7 +173,7 @@ export default function NotesWidget({ notes, onAddNote, onUpdateNote, onDeleteNo
                       setSelectedNoteId(note.id);
                       setView('detail');
                     }}
-                    className={`group/item p-3 rounded-xl border text-left flex flex-col justify-between transition-all duration-200 cursor-pointer relative ${
+                    className={`group/item p-3 rounded-xl border text-left flex flex-col transition-all duration-200 cursor-pointer relative ${
                       isSelected
                         ? 'bg-theme-accent/5 border-theme-accent/30'
                         : 'bg-theme-input-bg/15 border-theme-border/20 hover:border-theme-accent/20 hover:bg-theme-input-bg/30'
@@ -192,12 +192,10 @@ export default function NotesWidget({ notes, onAddNote, onUpdateNote, onDeleteNo
                       {note.content}
                     </p>
 
-                    <div className="flex items-center justify-between mt-2 pt-1 border-t border-theme-border/5">
-                      <span className="text-[7.5px] text-theme-text-muted/50 font-mono flex items-center gap-1">
-                        <Calendar size={8} />
-                        {formatNoteDate(note.updatedAt)}
-                      </span>
-                    </div>
+                    <span className="text-[7.5px] text-theme-text-muted/50 font-mono flex items-center gap-1 mt-1.5">
+                      <Calendar size={8} />
+                      {formatNoteDate(note.updatedAt)}
+                    </span>
 
                     {/* Absolute Bottom Right Delete Button */}
                     <button

@@ -197,7 +197,7 @@ export default function NewsWidget({ onRemove, onNavigate }: NewsWidgetProps) {
             <span>No articles found in this feed.</span>
           </div>
         ) : (
-          articles.slice(0, 8).map((article, idx) => {
+          articles.slice(0, 15).map((article, idx) => {
             const relTime = getRelativeTime(article.pubDate);
             const gradientClass = getGradientForTitle(article.title);
             return (
