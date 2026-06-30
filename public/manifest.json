@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Gaidrid - New Tab Workspace",
+  "version": "2.0.0",
+  "description": "A beautiful, modular, high-density productivity dashboard for your New Tab screen.",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "icons": {
+    "32": "gaidrid_32.png",
+    "64": "gaidrid_64.png",
+    "144": "gaidrid_144.png",
+    "512": "gaidrid_512.png"
+  }
+}

@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+dist/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Tooling (internal)
+.opencode/
+.impeccable/
+skills-lock.json
+PRODUCT.md
+DESIGN.md
+
+# Generated
+server.js
+metadata.json
+coverage/

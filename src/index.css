@@ -1,0 +1,211 @@
+@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+@import "tailwindcss";
+
+:root {
+  --theme-bg: #222831;
+  --theme-card: #31363F;
+  --theme-border: rgba(238, 238, 238, 0.12);
+  --theme-text: #EEEEEE;
+  --theme-text-muted: #B0B0B0;
+  --theme-accent: #EEEEEE;
+  --theme-accent-hover: #FFFFFF;
+  --theme-accent-text: #222831;
+  --theme-input-bg: #222831;
+  --theme-calendar-invert: 1;
+}
+
+@theme {
+  --font-sans: "Alexandria", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-brand-primary: var(--theme-text);
+  --color-brand-secondary: var(--theme-card);
+  --color-brand-bg: var(--theme-bg);
+
+  --color-theme-bg: var(--theme-bg);
+  --color-theme-card: var(--theme-card);
+  --color-theme-border: var(--theme-border);
+  --color-theme-text: var(--theme-text);
+  --color-theme-text-muted: var(--theme-text-muted);
+  --color-theme-accent: var(--theme-accent);
+  --color-theme-accent-hover: var(--theme-accent-hover);
+  --color-theme-accent-text: var(--theme-accent-text);
+  --color-theme-input-bg: var(--theme-input-bg);
+}
+
+/* Custom scrollbar and custom selections for premium look */
+::selection {
+  background-color: var(--theme-accent);
+  color: var(--theme-accent-text);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-border);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-text-muted);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+  overflow-x: hidden;
+}
+
+/* Premium custom styling for all <select> elements */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 11px;
+  padding-right: 2.5rem !important;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+select:hover {
+  border-color: var(--theme-accent);
+}
+
+select:focus {
+  border-color: var(--theme-accent);
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 2px;
+}
+
+/* Custom premium scrollbar for lists & scrollable containers */
+.scrollbar-thin {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Hide scrollbars inside all widgets on the dashboard */
+#widgets-grid-container *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+#widgets-grid-container * {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important;  /* IE and Edge */
+}
+
+/* Elegant vertical gradient fade mask for premium scroll lists (e.g. Finance widget items) */
+.premium-scroll-mask {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10px, black calc(100% - 10px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10px, black calc(100% - 10px), transparent 100%);
+}
+
+/* Beautiful micro-animations for interactive list items within custom containers */
+#widget-finance .group,
+#widget-todo .group,
+#widget-bookmarks .group {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#widget-finance .group:hover,
+#widget-todo .group:hover,
+#widget-bookmarks .group:hover {
+  transform: translateY(-2px);
+  border-color: var(--theme-accent);
+  background-color: var(--theme-input-bg);
+}
+
+/* Custom premium styling for all <input type="date"> elements */
+input[type="date"] {
+  position: relative;
+  color-scheme: light;
+  font-family: var(--font-mono), monospace;
+}
+
+body.dark input[type="date"] {
+  color-scheme: dark;
+}
+
+/* Beautiful custom calendar indicator icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(var(--theme-calendar-invert, 1));
+  opacity: 0.55;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  padding: 0;
+  margin: 0;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:active {
+  transform: scale(0.95);
+}
+
+/* Splash screen left-to-right fill animation */
+@keyframes splash-fill {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0% 0 0); }
+}
+
+.splash-fill-mask {
+  clip-path: inset(0 100% 0 0);
+  animation: splash-fill 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Base logo: invert dark SVG to white, dim to 50% */
+.splash-base-logo {
+  filter: invert(1) opacity(0.5);
+}
+
+/* Accent fill: use SVG as mask so only logo shapes show the accent color */
+.splash-accent-fill {
+  background: var(--theme-accent);
+  -webkit-mask-image: url('/gaidrid_full.svg');
+  mask-image: url('/gaidrid_full.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .splash-fill-mask {
+    animation: none !important;
+    clip-path: inset(0 0% 0 0) !important;
+  }
+}
+
