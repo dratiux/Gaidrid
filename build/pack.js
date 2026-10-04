@@ -15,7 +15,7 @@ const raw = execSync(`tar -tf "${zipPath}"`).toString().split(/\r?\n/).filter(Bo
 const entry = raw.map((e) => e.replace(/\\/g, '/').replace(/^\.\//, ''));
 const bad = entry.filter((e) => /(^|\/)(dist|\.git|\.github|node_modules|tests|docs)(\/|$)/.test(e) || /package(-lock)?\.json$|tailwind\.config\.cjs$|^_config\.yml$/.test(e));
 if (bad.length) throw new Error('zip contains excluded paths: ' + bad.join(', '));
-for (const req of ['manifest.json', 'newtab.html', 'js/app.js', 'PRIVACY.md', 'NOTICE', 'offline-game.html', 'dino-scripts/s8.js', 'css/app.css']) {
+for (const req of ['manifest.json', 'newtab.html', 'sidepanel.html', 'js/app.js', 'js/background.js', 'PRIVACY.md', 'NOTICE', 'offline-game.html', 'dino-scripts/s8.js', 'css/app.css', 'css/sidepanel.css']) {
   if (!entry.includes(req)) throw new Error('zip missing ' + req);
 }
 const size = Math.round(fs.statSync(zipPath).size / 1024);

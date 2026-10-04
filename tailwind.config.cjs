@@ -4,7 +4,8 @@
   theme: {
     extend: {
       colors: {
-        'google-blue': '#1a73e8',
+        // Accent-driven: --accent-rgb lives in css/tokens.css (html[data-accent=...])
+        'google-blue': 'rgb(var(--accent-rgb) / <alpha-value>)',
         'google-red': '#ea4335',
         'google-yellow': '#fbbc05',
         'google-green': '#34a853',

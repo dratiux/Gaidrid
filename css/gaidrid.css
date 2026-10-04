@@ -14,13 +14,13 @@ body {
 }
 input::selection,
 textarea::selection {
-  background: var(--gaidrid-navy);
-  color: var(--gaidrid-soft-white);
+  background: rgb(var(--accent-rgb));
+  color: #fff;
 }
 .dark input::selection,
 .dark textarea::selection {
-  background: var(--gaidrid-soft-white);
-  color: var(--gaidrid-navy);
+  background: rgb(var(--accent-rgb));
+  color: #fff;
 }
 
 /* Brand logotype: file art is navy, auto-inverted to white on dark surfaces */
@@ -33,7 +33,7 @@ textarea::selection {
 
 /* Keyboard-selected search suggestion (P0-3) */
 .suggestion-item.sugg-active {
-  background-color: rgba(26, 115, 232, 0.08);
+  background-color: rgb(var(--accent-rgb) / 0.08);
 }
 .dark .suggestion-item.sugg-active {
   background-color: rgba(255, 255, 255, 0.08);
@@ -124,12 +124,12 @@ textarea::selection {
    changes per platform. Inputs keep their own focus styling. */
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #1a73e8;
+  outline: 2px solid rgb(var(--accent-rgb));
   outline-offset: 2px;
 }
 .dark button:focus-visible,
 .dark a:focus-visible {
-  outline-color: #8ab4f8;
+  outline-color: color-mix(in srgb, rgb(var(--accent-rgb)) 60%, white);
 }
 
 /* Theme switch: compositor fade on body only (one element, cheap).
@@ -155,4 +155,27 @@ html.theme-swap,
 html.theme-swap body,
 html.theme-swap body * {
   transition: none !important;
+}
+
+/* Custom night-schedule time picker: scrollable hour/minute columns with the
+   current pick highlighted in the accent color. */
+.time-pick-col {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  max-height: 9.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px;
+  scrollbar-width: none;
+}
+.time-pick-col::-webkit-scrollbar {
+  display: none;
+}
+.time-pick-col button.time-pick-on {
+  background: rgb(var(--accent-rgb));
+  color: #fff;
+  font-weight: 600;
 }

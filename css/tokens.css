@@ -5,9 +5,21 @@
   --gaidrid-soft-white: #eeeeee;
   --gaidrid-font: 'Albert Sans', 'Inter', system-ui, sans-serif;
 
+  /* Accent color (rgb triplet so Tailwind alpha modifiers keep working).
+     Overridden by html[data-accent="..."] below; default = blue. */
+  --accent-rgb: 26 115 232;
+
   /* Legacy accents kept for compatibility, migrate gradually */
   --google-blue: #1a73e8;
   --google-red: #ea4335;
   --google-yellow: #fbbc05;
   --google-green: #34a853;
 }
+
+html[data-accent="teal"] { --accent-rgb: 13 148 136; }
+html[data-accent="green"] { --accent-rgb: 22 163 74; }
+html[data-accent="purple"] { --accent-rgb: 124 58 237; }
+html[data-accent="pink"] { --accent-rgb: 219 39 119; }
+html[data-accent="orange"] { --accent-rgb: 234 88 12; }
+html[data-accent="red"] { --accent-rgb: 220 38 38; }
+html[data-accent="navy"] { --accent-rgb: 33 40 50; }

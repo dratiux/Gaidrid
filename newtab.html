@@ -99,7 +99,7 @@
                                 <div data-engine="google" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105">
                                     <div class="flex items-center gap-1.5">
                                         <img src="assets/engines/google.svg" alt="Google" class="w-5 h-5 object-contain shrink-0">
-                                        <span class="inline-flex items-center"><span class="text-google-blue">G</span><span class="text-google-red">o</span><span class="text-google-yellow">o</span><span class="text-google-blue">g</span><span class="text-google-green">l</span><span class="text-google-red">e</span></span>
+                                        <span class="inline-flex items-center"><span class="text-[#1a73e8]">G</span><span class="text-google-red">o</span><span class="text-google-yellow">o</span><span class="text-[#1a73e8]">g</span><span class="text-google-green">l</span><span class="text-google-red">e</span></span>
                                     </div>
                                 </div>
 
@@ -160,7 +160,7 @@
                         </div>
 
                         <!-- Active Mode Badge (Tightly attached next to Engine Name) -->
-                        <span id="activeModeBadge" class="hidden text-[10px] font-semibold uppercase px-2 py-0.5 bg-google-blue/10 text-google-blue rounded-full transition-all shrink-0 ml-0.5 mr-1">
+                        <span id="activeModeBadge" class="hidden text-[10px] font-semibold uppercase px-2 py-0.5 bg-[#1a73e8]/10 text-[#1a73e8] rounded-full transition-all shrink-0 ml-0.5 mr-1">
                             All
                         </span>
 
@@ -195,7 +195,7 @@
                                 
                                 <!-- Mode 1: All -->
                                 <div data-mode="all" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-google-blue font-bold text-xs shadow-xs">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-[#1a73e8] font-bold text-xs shadow-xs">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                     </div>
                                 </div>
@@ -216,7 +216,7 @@
 
                                 <!-- Mode 4: Images -->
                                 <div data-mode="images" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-google-blue font-bold text-xs shadow-xs">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-[#1a73e8] font-bold text-xs shadow-xs">
                                         <i class="fa-solid fa-image"></i>
                                     </div>
                                 </div>
@@ -341,7 +341,7 @@
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
                     <div id="appColorRow" class="flex gap-1.5 flex-wrap"></div>
-                    <input type="hidden" id="appColorInput" value="bg-blue-50 text-google-blue dark:bg-blue-950/40">
+                    <input type="hidden" id="appColorInput" value="bg-blue-50 text-[#1a73e8] dark:bg-blue-950/40">
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" id="cancelAddAppBtn" class="px-3 py-1.5 rounded-xl text-xs font-medium text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
@@ -415,6 +415,60 @@
                         <button id="themeLight" class="px-2.5 py-1 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">Light</button>
                         <button id="themeDark" class="px-2.5 py-1 rounded-md bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-xs font-semibold">Dark</button>
                         <button id="themeAuto" class="px-2.5 py-1 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">Auto</button>
+                    </div>
+                </div>
+
+                <!-- Accent color -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Accent color</div>
+                        <div class="text-xs text-gray-400">Links, toggles and highlights</div>
+                    </div>
+                    <div id="accentSwatches" class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" data-accent="blue" aria-label="Blue accent" class="w-5 h-5 rounded-full bg-[#1a73e8] border border-black/10 dark:border-white/20 transition-transform hover:scale-110"></button>
+                        <button type="button" data-accent="teal" aria-label="Teal accent" class="w-5 h-5 rounded-full bg-[#0d9488] border border-black/10 dark:border-white/20 transition-transform hover:scale-110"></button>
+                        <button type="button" data-accent="green" aria-label="Green accent" class="w-5 h-5 rounded-full bg-[#16a34a] border border-black/10 dark:border-white/20 transition-transform hover:scale-110"></button>
+                        <button type="button" data-accent="purple" aria-label="Purple accent" class="w-5 h-5 rounded-full bg-[#7c3aed] border border-black/10 dark:border-white/20 transition-transform hover:scale-110"></button>
+                        <button type="button" data-accent="pink" aria-label="Pink accent" class="w-5 h-5 rounded-full bg-[#db2777] border border-black/10 dark:border-white/20 transition-transform hover:scale-110"></button>
+                        <button type="button" data-accent="orange" aria-label="Orange accent" class="w-5 h-5 rounded-full bg-[#ea580c] border border-black/10 dark:border-white/20 transition-transform hover:scale-110"></button>
+                        <button type="button" data-accent="red" aria-label="Red accent" class="w-5 h-5 rounded-full bg-[#dc2626] border border-black/10 dark:border-white/20 transition-transform hover:scale-110"></button>
+                        <button type="button" data-accent="navy" aria-label="Navy accent" class="w-5 h-5 rounded-full bg-[#212832] border border-black/10 dark:border-white/20 transition-transform hover:scale-110"></button>
+                    </div>
+                </div>
+
+                <!-- Night schedule -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Night schedule</div>
+                        <div class="text-xs text-gray-400">Force dark within a time window (Auto mode)</div>
+                    </div>
+                    <button id="autoNightBtn" class="w-12 h-6 bg-gray-200 dark:bg-white/10 rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="autoNightCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-0"></div>
+                    </button>
+                </div>
+                <div id="autoNightTimes" class="hidden flex-col gap-3">
+                    <div class="flex items-center justify-center gap-2">
+                        <button type="button" id="autoNightStartBtn" aria-haspopup="true" aria-expanded="false" class="flex items-center gap-1.5 bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-google-blue/40 dark:hover:border-white/20 transition-colors">
+                            <i class="fa-solid fa-moon text-[10px] text-gray-400"></i>
+                            <span id="autoNightStartLabel">10:00 PM</span>
+                        </button>
+                        <span class="text-xs text-gray-400">until</span>
+                        <button type="button" id="autoNightEndBtn" aria-haspopup="true" aria-expanded="false" class="flex items-center gap-1.5 bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-google-blue/40 dark:hover:border-white/20 transition-colors">
+                            <i class="fa-solid fa-sun text-[10px] text-gray-400"></i>
+                            <span id="autoNightEndLabel">07:00 AM</span>
+                        </button>
+                    </div>
+
+                    <!-- Custom time picker: replaces the native time input -->
+                    <div id="timePickerPanel" class="hidden w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-xl p-2.5 select-none">
+                        <div class="flex items-center justify-between mb-2 pb-2 border-b border-gray-200 dark:border-white/10">
+                            <span id="timePickerTitle" class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Starts</span>
+                            <span id="timePickerPreview" class="text-sm font-semibold text-google-blue tabular-nums">10:00 PM</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <div id="timePickerHours" class="time-pick-col"></div>
+                            <div id="timePickerMinutes" class="time-pick-col"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -743,7 +797,7 @@
             <div class="flex justify-center mb-4 pt-2">
                 <img src="assets/gaidrid-logotype.svg" alt="Gaidrid" class="brand-logo h-9 w-auto">
             </div>
-            <p class="text-xs text-gray-400 mt-0.5 mb-3">Version 1.0.0</p>
+            <p class="text-xs text-gray-400 mt-0.5 mb-3">Version 1.1.0</p>
             <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">One Tab. Everything.</p>
             <div class="mt-4 flex items-center justify-center gap-2">
                 <a href="https://facebook.com/gaidrid" target="_blank" rel="noopener" aria-label="Facebook" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#1877F2] hover:border-[#1877F2]/40 transition-all">

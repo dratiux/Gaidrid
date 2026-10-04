@@ -22,6 +22,10 @@
             history: [],
             showTopSites: true,
             themeMode: 'auto',
+            accent: 'blue',
+            autoNight: false,
+            autoNightStart: '22:00',
+            autoNightEnd: '07:00',
             sportsLeague: 'ucl',
             sportsDay: 0,
             sportsFav: { ucl: null, epl: null, nba: null, nfl: null },
@@ -51,7 +55,7 @@
                 { id: '6', title: 'Reddit', url: 'https://reddit.com', icon: 'fa-brands fa-reddit-alien', color: 'bg-orange-50 text-orange-600 dark:bg-orange-950/40' },
                 { id: '8', title: 'Spotify', url: 'https://spotify.com', icon: 'fa-brands fa-spotify', color: 'bg-green-50 text-google-green dark:bg-green-950/40' },
                 { id: '9', title: 'Amazon', url: 'https://amazon.com', icon: 'fa-brands fa-amazon', color: 'bg-yellow-50 text-amber-600 dark:bg-yellow-950/40' },
-                { id: '10', title: 'LinkedIn', url: 'https://linkedin.com', icon: 'fa-brands fa-linkedin-in', color: 'bg-blue-50 text-google-blue dark:bg-blue-950/40' },
+                { id: '10', title: 'LinkedIn', url: 'https://linkedin.com', icon: 'fa-brands fa-linkedin-in', color: 'bg-blue-50 text-[#1a73e8] dark:bg-blue-950/40' },
                 { id: '12', title: 'Stack Overflow', url: 'https://stackoverflow.com', icon: 'fa-brands fa-stack-overflow', color: 'bg-orange-50 text-orange-500 dark:bg-orange-950/40' }
             ]
         };
@@ -117,12 +121,17 @@
             }
         };
 
+        // Bangs: one-off engine override for this search only (!yt, !b, !dd, ...)
+        const BANGS = { g: 'google', yt: 'youtube', b: 'bing', dd: 'duckduckgo', br: 'brave', ya: 'yahoo', ec: 'ecosia' };
+
         // Mode Colors Map
         const modeColors = {
-            all: { bg: 'bg-google-blue/10', text: 'text-google-blue' },
+            // Mode identity colors are fixed (paired with the fixed circle backgrounds
+            // in the mode reel); only site chrome follows the accent color.
+            all: { bg: 'bg-[#1a73e8]/10', text: 'text-[#1a73e8]' },
             news: { bg: 'bg-google-yellow/10', text: 'text-google-yellow' },
             maps: { bg: 'bg-google-green/10', text: 'text-google-green' },
-            images: { bg: 'bg-google-blue/10', text: 'text-google-blue' },
+            images: { bg: 'bg-[#1a73e8]/10', text: 'text-[#1a73e8]' },
             videos: { bg: 'bg-google-red/10', text: 'text-google-red' }
         };
 
@@ -131,6 +140,14 @@
         let offlineMode = false;       // true while the connection is down (dino screen)
         let dinoMoon = null;           // game's moon state (inverted XOR system dark), follows while offline
         let dinoWatermark = false;     // dino.svg currently shown as watermark
+
+        // Side panel context (sidepanel.html frames this page with ?sidepanel=1):
+        // navigation must open a new tab instead of replacing the panel.
+        const IS_PANEL = /[?&]sidepanel=1/.test(location.search);
+        function navTo(url) {
+            if (IS_PANEL) window.open(url, '_blank', 'noopener');
+            else window.location.href = url;
+        }
         const digitalClock = document.getElementById('digitalClock');
         const digitalDate = document.getElementById('digitalDate');
         const digitalGreeting = document.getElementById('digitalGreeting');
@@ -185,7 +202,7 @@
             56: { day: { label: 'Freezing Drizzle', icon: 'fa-snowflake', color: 'text-cyan-300' }, night: { label: 'Freezing Drizzle', icon: 'fa-snowflake', color: 'text-cyan-300' } },
             57: { day: { label: 'Heavy Freezing Drizzle', icon: 'fa-snowflake', color: 'text-cyan-400' }, night: { label: 'Heavy Freezing Drizzle', icon: 'fa-snowflake', color: 'text-cyan-400' } },
             61: { day: { label: 'Slight Rain', icon: 'fa-cloud-rain', color: 'text-blue-400' }, night: { label: 'Slight Rain', icon: 'fa-cloud-rain', color: 'text-blue-400' } },
-            63: { day: { label: 'Moderate Rain', icon: 'fa-cloud-showers-heavy', color: 'text-google-blue' }, night: { label: 'Moderate Rain', icon: 'fa-cloud-showers-heavy', color: 'text-google-blue' } },
+            63: { day: { label: 'Moderate Rain', icon: 'fa-cloud-showers-heavy', color: 'text-[#1a73e8]' }, night: { label: 'Moderate Rain', icon: 'fa-cloud-showers-heavy', color: 'text-[#1a73e8]' } },
             65: { day: { label: 'Heavy Rain', icon: 'fa-cloud-showers-water', color: 'text-blue-600' }, night: { label: 'Heavy Rain', icon: 'fa-cloud-showers-water', color: 'text-blue-600' } },
             66: { day: { label: 'Freezing Rain', icon: 'fa-snowflake', color: 'text-cyan-300' }, night: { label: 'Freezing Rain', icon: 'fa-snowflake', color: 'text-cyan-300' } },
             67: { day: { label: 'Heavy Freezing Rain', icon: 'fa-snowflake', color: 'text-cyan-400' }, night: { label: 'Heavy Freezing Rain', icon: 'fa-snowflake', color: 'text-cyan-400' } },
@@ -769,29 +786,43 @@
             modeReel.scrollTop = scrollTop - walk;
         });
 
+        // Set when the user explicitly picks a "... - Search" row for a URL-like
+        // query; submit then searches it instead of visiting it.
+        let forceSearchOnce = false;
+
         function isUrlLike(q) {
             return /^(https?:\/\/|www\.)\S+\.\S+/i.test(q) || /^[\w-]+(\.[\w-]+)+([\/?#]\S*)?$/.test(q);
         }
         function gotoUrl(q) {
-            window.location.href = /^[a-z][a-z0-9+.-]*:\/\//i.test(q) ? q : 'https://' + q;
+            navTo(/^[a-z][a-z0-9+.-]*:\/\//i.test(q) ? q : 'https://' + q);
         }
 
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const query = searchInput.value.trim();
+            let query = searchInput.value.trim();
             if (!query) return;
+            const forceSearch = forceSearchOnce;
+            forceSearchOnce = false;
+
+            // Bangs: "!yt cats" searches YouTube for this query only (saved engine untouched).
+            let engine = engineConfig[state.searchEngine] || engineConfig.google;
+            const bm = query.match(/^!(\w+)\s+([\s\S]+)$/);
+            if (bm && BANGS[bm[1]] && engineConfig[BANGS[bm[1]]]) {
+                engine = engineConfig[BANGS[bm[1]]];
+                query = bm[2].trim();
+                if (!query) return;
+            }
             pushHistory(query);
 
-            if (isUrlLike(query)) {
+            if (isUrlLike(query) && !forceSearch) {
                 gotoUrl(query);
                 return;
             }
 
-            const engine = engineConfig[state.searchEngine] || engineConfig.google;
             const modeUrls = { images: engine.imagesUrl, maps: engine.mapsUrl, news: engine.newsUrl, videos: engine.videosUrl };
             const url = (modeUrls[state.searchMode] || engine.url) + encodeURIComponent(query);
 
-            window.location.href = url;
+            navTo(url);
         });
 
         // Search Input Suggestions Toggle
@@ -837,10 +868,12 @@
             const engineName = suggEngineName();
             suggestionsList.innerHTML = displayList.map(function (item) {
                 const isCalc = item.indexOf('= ') === 0;
-                const isUrl = !isCalc && isUrlLike(item.replace(' - Search ' + engineName, ''));
-                return '<div class="suggestion-item px-5 py-2.5 hover:bg-gray-50 dark:hover:bg-white/10 flex items-center gap-3 cursor-pointer text-sm text-gray-700 dark:text-gray-200">'
+                const cleaned = isCalc ? item : item.replace(' - Search ' + engineName, '');
+                const isSearchRow = !isCalc && cleaned !== item;
+                const act = isCalc ? 'calc' : (isSearchRow ? 'search' : (isUrlLike(cleaned) ? 'url' : 'search'));
+                return '<div class="suggestion-item px-5 py-2.5 hover:bg-gray-50 dark:hover:bg-white/10 flex items-center gap-3 cursor-pointer text-sm text-gray-700 dark:text-gray-200" data-act="' + act + '">'
                     + (isCalc ? '<i class="fa-solid fa-calculator text-google-blue text-xs"></i>'
-                        : isUrl ? '<i class="fa-solid fa-globe text-gray-400 text-xs"></i>'
+                        : act === 'url' ? '<i class="fa-solid fa-globe text-gray-400 text-xs"></i>'
                         : '<i class="fa-solid fa-magnifying-glass text-gray-400 text-xs"></i>')
                     + '<span>' + escHtml(item) + '</span></div>';
             }).join('');
@@ -851,17 +884,26 @@
 
             document.querySelectorAll('.suggestion-item').forEach(function (el) {
                 el.addEventListener('click', function () {
+                    const act = el.getAttribute('data-act');
                     const raw = el.querySelector('span').textContent;
-                    if (raw.indexOf('= ') === 0) {
+                    if (act === 'calc') {
                         searchInput.value = raw.slice(2);
                         suggestionsBox.classList.add('hidden');
                         searchInput.focus();
                         return;
                     }
-                    searchInput.value = raw.replace(' - Search ' + engineName, '');
+                    const cleaned = raw.replace(' - Search ' + engineName, '');
+                    if (act === 'search' && isUrlLike(cleaned)) forceSearchOnce = true;
+                    searchInput.value = cleaned;
                     searchForm.dispatchEvent(new Event('submit'));
                 });
             });
+        }
+
+        // Rows offered when the query itself looks like a URL: visit it, or search for it.
+        function urlSuggestionRows(query) {
+            if (!isUrlLike(query)) return [];
+            return [query, query + ' - Search ' + suggEngineName()];
         }
 
         function showSuggestions(query) {
@@ -873,8 +915,14 @@
             const q = query.toLowerCase();
             const hist = (state.history || []).filter(function (item) { return item.toLowerCase().includes(q) && item.toLowerCase() !== q; });
             const matches = state.suggestions.filter(function (item) { return item.toLowerCase().includes(q); });
-            const combined = hist.concat(matches).slice(0, 7);
-            renderSuggestionItems(combined.length > 0 ? combined : (isUrlLike(query) ? [query] : [query + ' - Search ' + suggEngineName()]));
+            const base = urlSuggestionRows(query);
+            const baseKeys = base.map(function (x) { return x.toLowerCase(); });
+            const combined = hist.concat(matches).filter(function (item) {
+                return baseKeys.indexOf(item.toLowerCase()) === -1;
+            }).slice(0, 7);
+            const list = base.concat(combined);
+            if (!list.length) list.push(query + ' - Search ' + suggEngineName());
+            renderSuggestionItems(list.slice(0, 8));
             refreshLiveSuggestions(query);
         }
 
@@ -915,7 +963,12 @@
                 const items = parseSuggest(state.searchEngine, data).slice(0, 7);
                 if (seq !== suggSeq) return;
                 if (searchInput.value.trim() !== query || !items.length) return;
-                renderSuggestionItems(items);
+                // Keep the visit/search rows for URL-like queries pinned above live results.
+                const base = urlSuggestionRows(query);
+                const baseKeys = base.map(function (x) { return x.toLowerCase(); });
+                renderSuggestionItems(base.concat(items.filter(function (i) {
+                    return baseKeys.indexOf(String(i).toLowerCase()) === -1;
+                })).slice(0, 8));
             } catch (err) { /* keep local list */ }
             finally { clearTimeout(timer); }
         }
@@ -1058,7 +1111,7 @@
             const hidden = document.getElementById('appIconInput');
             const colorHidden = document.getElementById('appColorInput');
             const val = (hidden ? hidden.value : '').trim() || 'fa-solid fa-globe';
-            const color = (colorHidden ? colorHidden.value : '').trim() || 'bg-blue-50 text-google-blue dark:bg-blue-950/40';
+            const color = (colorHidden ? colorHidden.value : '').trim() || 'bg-blue-50 text-[#1a73e8] dark:bg-blue-950/40';
             if (!prev) return;
             prev.className = PREVIEW_BASE + color;
             if (val.indexOf('iconify:') === 0) {
@@ -1093,7 +1146,7 @@
             const r = document.getElementById('appIconResults');
             if (r) { r.innerHTML = ''; r.classList.add('hidden'); }
             const hc = document.getElementById('appColorInput');
-            if (hc) hc.value = (app && app.color) ? app.color : 'bg-blue-50 text-google-blue dark:bg-blue-950/40';
+            if (hc) hc.value = (app && app.color) ? app.color : 'bg-blue-50 text-[#1a73e8] dark:bg-blue-950/40';
             paintColorRow();
             paintIconPreview();
             addAppModal.classList.remove('opacity-0', 'pointer-events-none');
@@ -1115,7 +1168,7 @@
             const url = appUrlInput.value.trim();
             const icon = appIconInput.value.trim() || 'fa-solid fa-globe';
             const colorEl = document.getElementById('appColorInput');
-            const color = (colorEl ? colorEl.value : '').trim() || 'bg-blue-50 text-google-blue dark:bg-blue-950/40';
+            const color = (colorEl ? colorEl.value : '').trim() || 'bg-blue-50 text-[#1a73e8] dark:bg-blue-950/40';
 
             if (title && url) {
                 if (editingAppId) {
@@ -1171,6 +1224,7 @@
         }
 
         function closeSettings() {
+            closeTimePicker();
             if (settingsModal) settingsModal.classList.add('opacity-0', 'pointer-events-none');
         }
 
@@ -1257,6 +1311,8 @@
       notes: state.notes,
       history: state.history, showTopSites: state.showTopSites,
       themeMode: state.themeMode,
+      accent: state.accent, autoNight: state.autoNight,
+      autoNightStart: state.autoNightStart, autoNightEnd: state.autoNightEnd,
       sportsLeague: state.sportsLeague, sportsDay: state.sportsDay,
       sportsFav: state.sportsFav, sportsAuto: state.sportsAuto, sportsShowFinished: state.sportsShowFinished,
       newsFeeds: state.newsFeeds, newsAuto: state.newsAuto,
@@ -1298,6 +1354,63 @@ function paintToggle(btn, circle, on) {
     : 'w-12 h-6 bg-gray-200 dark:bg-white/10 rounded-full p-1 transition-colors relative shrink-0';
 }
 
+function paintAccents() {
+  const cur = state.accent || 'blue';
+  document.querySelectorAll('#accentSwatches [data-accent]').forEach((b) => {
+    const on = b.getAttribute('data-accent') === cur;
+    b.classList.toggle('outline', on);
+    b.classList.toggle('outline-2', on);
+    b.classList.toggle('outline-offset-2', on);
+    b.classList.toggle('outline-gray-400', on);
+    b.classList.toggle('dark:outline-white/70', on);
+  });
+}
+
+/* ---- Custom night-schedule time picker helpers ---- */
+let timePickTarget = null; // 'autoNightStart' | 'autoNightEnd' while the picker is open
+
+function fmtNightTime(hhmm) {
+  const p = String(hhmm || '00:00').split(':');
+  const h = parseInt(p[0], 10) || 0;
+  const m = (p[1] || '00').slice(-2).padStart(2, '0');
+  if (state.use24Hour) return (h < 10 ? '0' + h : h) + ':' + m;
+  return (h % 12 || 12) + ':' + m + (h >= 12 ? ' PM' : ' AM');
+}
+
+function updateTimeButtons() {
+  const s = document.getElementById('autoNightStartLabel');
+  if (s) s.textContent = fmtNightTime(state.autoNightStart || '22:00');
+  const e = document.getElementById('autoNightEndLabel');
+  if (e) e.textContent = fmtNightTime(state.autoNightEnd || '07:00');
+}
+
+function paintTimePicker() {
+  const panel = document.getElementById('timePickerPanel');
+  if (!panel || panel.classList.contains('hidden') || !timePickTarget) return;
+  const hhmm = state[timePickTarget] || (timePickTarget === 'autoNightEnd' ? '07:00' : '22:00');
+  const p = hhmm.split(':');
+  const h = parseInt(p[0], 10);
+  const m = parseInt(p[1], 10);
+  const title = document.getElementById('timePickerTitle');
+  if (title) title.textContent = timePickTarget === 'autoNightEnd' ? 'Ends' : 'Starts';
+  const preview = document.getElementById('timePickerPreview');
+  if (preview) preview.textContent = fmtNightTime(hhmm);
+  document.querySelectorAll('#timePickerHours [data-h]').forEach((b) => b.classList.toggle('time-pick-on', +b.getAttribute('data-h') === h));
+  document.querySelectorAll('#timePickerMinutes [data-m]').forEach((b) => b.classList.toggle('time-pick-on', +b.getAttribute('data-m') === m));
+}
+
+function closeTimePicker() {
+  const panel = document.getElementById('timePickerPanel');
+  if (!panel || panel.classList.contains('hidden')) return false;
+  panel.classList.add('hidden');
+  timePickTarget = null;
+  ['autoNightStartBtn', 'autoNightEndBtn'].forEach((id) => {
+    const b = document.getElementById(id);
+    if (b) b.setAttribute('aria-expanded', 'false');
+  });
+  return true;
+}
+
 function syncSettingsUI() {
   paintToggle(clockFormatBtn, clockToggleCircle, state.use24Hour);
   paintToggle(showSecondsBtn, secondsToggleCircle, state.showSeconds);
@@ -1318,6 +1431,13 @@ function syncSettingsUI() {
   syncNotesArea();
   if (typeof setTemperatureUnit === 'function') setTemperatureUnit(!!state.isCelsius);
   paintThemeSeg();
+  paintAccents();
+  const anb = document.getElementById('autoNightBtn');
+  if (anb) paintToggle(anb, document.getElementById('autoNightCircle'), !!state.autoNight);
+  const ant = document.getElementById('autoNightTimes');
+  if (ant) { ant.classList.toggle('hidden', !state.autoNight); ant.classList.toggle('flex', !!state.autoNight); }
+  updateTimeButtons();
+  if (window.repaintTimePicker) window.repaintTimePicker();
   paintSportsSettings();
   paintNewsSettings();
   updateClock();
@@ -1396,6 +1516,11 @@ function fetchGeoWeather(userInitiated) {
     suggestionsBox.classList.add('hidden');
     if (typeof citySuggestionsBox !== 'undefined' && citySuggestionsBox) citySuggestionsBox.classList.add('hidden');
     suggActive = -1;
+    // Esc closes the time picker first, before the settings panel itself.
+    if (closeTimePicker()) {
+      if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+      return;
+    }
     closeDrawer(); closeSettings(); closeAddAppModal(); closeVoiceModal(); closeAbout(); closeNotes(); hideOnboarding(); closePomo(); closeSports(); closeNews(); closeCardMenus();
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   });
@@ -1414,13 +1539,17 @@ function fetchGeoWeather(userInitiated) {
       paintSuggActive();
     } else if (e.key === 'Enter' && suggActive >= 0) {
       e.preventDefault();
-      const raw = items[suggActive].querySelector('span').textContent;
-      if (raw.indexOf('= ') === 0) {
+      const el = items[suggActive];
+      const raw = el.querySelector('span').textContent;
+      const act = el.getAttribute('data-act');
+      if (act === 'calc') {
         searchInput.value = raw.slice(2);
         suggestionsBox.classList.add('hidden');
         return;
       }
-      searchInput.value = raw.replace(' - Search ' + suggEngineName(), '');
+      const cleaned = raw.replace(' - Search ' + suggEngineName(), '');
+      if (act === 'search' && isUrlLike(cleaned)) forceSearchOnce = true;
+      searchInput.value = cleaned;
       searchForm.dispatchEvent(new Event('submit'));
     }
   });
@@ -1810,13 +1939,26 @@ function observeDinoMoon() {
     new MutationObserver(readDinoMoon).observe(d.documentElement, { attributes: true, attributeFilter: ['class'] });
   } catch (e) {}
 }
+// Night window: true when now is inside [start, end) (wraps past midnight).
+function nightNow(s, e) {
+  if (!s || !e) return false;
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const t = (x) => { const p = String(x).split(':'); return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0); };
+  const a = t(s), b = t(e);
+  return a <= b ? (cur >= a && cur < b) : (cur >= a || cur < b);
+}
 function applyTheme() {
   const mode = state.themeMode || 'auto';
   let dark = true;
   if (mode === 'light') dark = false;
-  else if (mode === 'auto' && window.matchMedia) dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  else if (mode === 'auto' && window.matchMedia) {
+    dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (state.autoNight && nightNow(state.autoNightStart, state.autoNightEnd)) dark = true;
+  }
   if (offlineMode && dinoMoon !== null) dark = dinoMoon;
   const root = document.documentElement;
+  root.setAttribute('data-accent', state.accent || 'blue');
   const changed = root.classList.toggle('dark', dark);
   if (changed && !root.classList.contains('theme-swap')) {
     root.classList.add('theme-swap');
@@ -1858,7 +2000,14 @@ function paintThemeSeg() {
     if (gaidridTyping() || gaidridModalOpen()) return;
     const links = document.querySelectorAll('#topSitesGrid a');
     const a = links[parseInt(e.key, 10) - 1];
-    if (a && a.href) window.location.href = a.href;
+    if (a && a.href) navTo(a.href);
+  });
+
+  // In the side panel, top-site tiles must open a new tab (an iframe cannot
+  // navigate to sites that send X-Frame-Options).
+  if (IS_PANEL) document.addEventListener('click', (e) => {
+    const a = e.target && e.target.closest ? e.target.closest('#topSitesGrid a') : null;
+    if (a && a.href) { e.preventDefault(); window.open(a.href, '_blank', 'noopener'); }
   });
 
   const seg = (id, mode) => {
@@ -1872,6 +2021,104 @@ function paintThemeSeg() {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (state.themeMode === 'auto') applyTheme(); });
   }
   paintThemeSeg();
+
+  // Night schedule toggle (time fields use the custom picker wired below).
+  const anb = document.getElementById('autoNightBtn');
+  if (anb) anb.addEventListener('click', () => {
+    state.autoNight = !state.autoNight;
+    if (typeof syncSettingsUI === 'function') syncSettingsUI();
+    applyTheme();
+    if (window.GaidridSave) window.GaidridSave();
+  });
+  // Re-evaluate the night window while the tab stays open.
+  setInterval(() => { if (state.themeMode === 'auto' && state.autoNight) applyTheme(); }, 30000);
+
+  // Accent color swatches.
+  const sw = document.getElementById('accentSwatches');
+  if (sw) sw.addEventListener('click', (e) => {
+    const b = e.target && e.target.closest ? e.target.closest('[data-accent]') : null;
+    if (!b) return;
+    state.accent = b.getAttribute('data-accent') || 'blue';
+    applyTheme();
+    if (typeof syncSettingsUI === 'function') syncSettingsUI();
+    if (window.GaidridSave) window.GaidridSave();
+  });
+})();
+
+/* ---- Custom time picker for the night schedule (replaces the native time input) ---- */
+(function gaidridTimePicker() {
+  const panel = document.getElementById('timePickerPanel');
+  const startBtn = document.getElementById('autoNightStartBtn');
+  const endBtn = document.getElementById('autoNightEndBtn');
+  const hoursCol = document.getElementById('timePickerHours');
+  const minutesCol = document.getElementById('timePickerMinutes');
+  if (!panel || !startBtn || !endBtn || !hoursCol || !minutesCol) return;
+
+  const HOURS = [];
+  for (let h = 0; h < 24; h++) HOURS.push(h);
+  const MINUTES = [];
+  for (let m = 0; m < 60; m += 5) MINUTES.push(m);
+  const itemCls = 'py-1.5 rounded-lg text-xs tabular-nums text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors';
+
+  const curTime = () => state[timePickTarget] || (timePickTarget === 'autoNightEnd' ? '07:00' : '22:00');
+
+  function renderCols() {
+    hoursCol.innerHTML = HOURS.map((h) => {
+      const label = state.use24Hour ? (h < 10 ? '0' + h : h) : ((h % 12) || 12) + (h >= 12 ? ' PM' : ' AM');
+      return '<button type="button" data-h="' + h + '" class="' + itemCls + '">' + label + '</button>';
+    }).join('');
+    minutesCol.innerHTML = MINUTES.map((m) => '<button type="button" data-m="' + m + '" class="' + itemCls + '">' + (m < 10 ? '0' + m : m) + '</button>').join('');
+  }
+
+  function openPicker(t) {
+    timePickTarget = t;
+    renderCols();
+    panel.classList.remove('hidden');
+    paintTimePicker();
+    startBtn.setAttribute('aria-expanded', String(t === 'autoNightStart'));
+    endBtn.setAttribute('aria-expanded', String(t === 'autoNightEnd'));
+    const on = hoursCol.querySelector('.time-pick-on');
+    if (on) hoursCol.scrollTop = Math.max(0, on.offsetTop - hoursCol.clientHeight / 2 + on.offsetHeight / 2);
+  }
+
+  function commit(hhmm) {
+    state[timePickTarget] = hhmm;
+    updateTimeButtons();
+    paintTimePicker();
+    applyTheme();
+    if (window.GaidridSave) window.GaidridSave();
+  }
+
+  hoursCol.addEventListener('click', (e) => {
+    const b = e.target && e.target.closest ? e.target.closest('[data-h]') : null;
+    if (!b || !timePickTarget) return;
+    commit(b.getAttribute('data-h') + ':' + curTime().split(':')[1]);
+  });
+  minutesCol.addEventListener('click', (e) => {
+    const b = e.target && e.target.closest ? e.target.closest('[data-m]') : null;
+    if (!b || !timePickTarget) return;
+    commit(curTime().split(':')[0] + ':' + String(b.getAttribute('data-m')).padStart(2, '0'));
+  });
+
+  const toggle = (t) => {
+    if (timePickTarget === t && !panel.classList.contains('hidden')) closeTimePicker();
+    else openPicker(t);
+  };
+  startBtn.addEventListener('click', () => toggle('autoNightStart'));
+  endBtn.addEventListener('click', () => toggle('autoNightEnd'));
+
+  // Clicking anywhere else in settings closes the picker.
+  document.addEventListener('click', (e) => {
+    if (panel.classList.contains('hidden')) return;
+    if (!panel.contains(e.target) && !startBtn.contains(e.target) && !endBtn.contains(e.target)) closeTimePicker();
+  });
+
+  // Re-render labels (12/24h) when settings repaint while the picker is open.
+  window.repaintTimePicker = () => {
+    if (timePickTarget && !panel.classList.contains('hidden')) openPicker(timePickTarget);
+  };
+
+  updateTimeButtons();
 })();
 
 /* ---- Pomodoro modal wiring ---- */
@@ -2056,7 +2303,7 @@ function topTileHTML(s, idx) {
 
 /* ---- Tile color presets (same look as default shortcuts) ---- */
 const APPCOLORS = [
-  'bg-blue-50 text-google-blue dark:bg-blue-950/40',
+  'bg-blue-50 text-[#1a73e8] dark:bg-blue-950/40',
   'bg-red-50 text-google-red dark:bg-red-950/40',
   'bg-orange-50 text-orange-600 dark:bg-orange-950/40',
   'bg-yellow-50 text-amber-600 dark:bg-yellow-950/40',
@@ -2113,6 +2360,12 @@ function migrateTileIcons() {
     if (m && (a.icon || '').trim() === m.old) {
       a.icon = m.icon;
       a.color = gray;
+      changed = true;
+    }
+    // Old saves stored the blue tile color as the accent-driven token; pin it to
+    // the fixed brand blue so a saved tile color never follows the accent.
+    if (typeof a.color === 'string' && a.color.indexOf('text-google-blue') !== -1) {
+      a.color = a.color.split('text-google-blue').join('text-[#1a73e8]');
       changed = true;
     }
   });

@@ -7,7 +7,8 @@ visually refined workspace. Minimal interface, quick access, zero clutter.
 
 - **Multi-engine search** — Google, YouTube, Bing, DuckDuckGo, Brave, Yahoo,
   Ecosia with result-type modes (All, News, Maps, Images, Videos), live
-  suggestions, history and an offline calculator (`12*45` → `540`).
+  suggestions, history and an offline calculator (`12*45` → `540`). Engine
+  bangs (`!yt cats`, `!b …`, `!dd …`) run one search on another engine.
 - **Clock, date & greeting** — 12/24-hour, seconds toggle, optional name.
 - **Live weather** — city or browser geolocation (cached, permission asked
   only on explicit action), °C/°F.
@@ -23,8 +24,11 @@ visually refined workspace. Minimal interface, quick access, zero clutter.
   default) with your own extra feeds, lazy-loaded thumbnails, and Readability-
   extracted reading view. Network call only when you open the dock.
 - **Extras** — Pomodoro timer, quick notes, daily quote, keyboard shortcuts
-  (`/`, `1–8`, arrows, `Enter`, `Esc`), Light/Dark/Auto theme, JSON backup,
+  (`/`, `1–8`, arrows, `Enter`, `Esc`), Light/Dark/Auto theme, accent color
+  picker, night schedule (force dark in a time window), JSON backup,
   first-run onboarding, splash screen.
+- **Side panel** — open the same workspace in the browser's side panel;
+  search and shortcuts there open results in a new tab.
 - **Privacy-first** — fully offline bundle (Tailwind, FontAwesome, fonts
   vendored); sync storage with local fallback; no accounts, ads or trackers.
   See [PRIVACY.md](PRIVACY.md).
@@ -40,9 +44,6 @@ visually refined workspace. Minimal interface, quick access, zero clutter.
 ├── assets/            # icons, engine marks, logotypes, Albert Sans (+OFL)
 └── vendor/            # FontAwesome + Readability (local, no CDN)
 ```
-
-Brand sources (`01_Brand-Guidelines` … `05_Design-System`) stay outside the
-repo (local only) and are not published to the store.
 
 ## Install (developer mode)
 
