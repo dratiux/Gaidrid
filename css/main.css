@@ -1,0 +1,82 @@
+body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+        }
+
+        /* Hide scrollbars completely across all browsers */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none !important;  /* IE and Edge */
+            scrollbar-width: none !important;  /* Firefox */
+        }
+
+        /* Pulse wave animation for Voice Search */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .voice-pulse {
+            animation: pulse-ring 1.8s infinite ease-in-out;
+        }
+
+        /* Hide scrollbars for clean UI */
+        /* Mode Reel Container */
+        .mode-reel-container {
+            height: 48px;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        .mode-reel-item {
+            height: 48px;
+            scroll-snap-align: center;
+        }
+
+        @keyframes spin-slow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 18s linear infinite;
+        }
+
+        /* ---- Offline mode: dino game replaces the search bar (weather stays) ---- */
+        #dinoHost {
+            display: none;
+        }
+        html.offline-mode #dinoHost {
+            display: block;
+        }
+        html.offline-mode #searchWrap,
+        html.offline-mode #topSitesWrap,
+        html.offline-mode #sportsBtn,
+        html.offline-mode #newsBtn {
+            display: none !important;
+        }
+        #dinoFrame {
+            display: block;
+            width: 100%;
+            max-width: 640px;
+            height: 300px;
+            margin: 0 auto;
+            border: 0;
+            background: transparent;
+        }
+
+        /* ---- News reading mode ---- */
+        .article-body p { margin: 0 0 0.8em; }
+        .article-body h1, .article-body h2, .article-body h3, .article-body h4 { font-weight: 600; margin: 1.2em 0 0.5em; font-size: 1.05em; }
+        .article-body a { color: #1a73e8; text-decoration: underline; }
+        .dark .article-body a { color: #8ab4f8; }
+        .article-body img { max-width: 100%; height: auto; border-radius: 0.75rem; margin: 0.5em 0; }
+        .article-body ul, .article-body ol { margin: 0 0 0.8em 1.2em; }
+        .article-body li { margin: 0.2em 0; }
+        .article-body blockquote { border-left: 3px solid #d1d5db; padding-left: 0.8em; color: #6b7280; margin: 0.8em 0; }
+        .dark .article-body blockquote { border-color: #4b5563; color: #9ca3af; }
+        .article-body pre { overflow-x: auto; background: rgba(0, 0, 0, 0.05); padding: 0.6em; border-radius: 0.6em; margin: 0.8em 0; }
+        .dark .article-body pre { background: rgba(255, 255, 255, 0.06); }
+        .article-body figure { margin: 0.8em 0; }

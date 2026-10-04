@@ -1,0 +1,24 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    # bsdtar on macOS supports `tar -a` (same as Windows); GNU tar on Ubuntu does not.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: node --check js/app.js
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gaidrid-zip
+          path: dist/*.zip

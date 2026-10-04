@@ -1,0 +1,15 @@
+{
+  "name": "gaidrid",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Gaidrid MV3 new-tab extension.",
+  "scripts": {
+    "css": "tailwindcss -c tailwind.config.cjs -i build/input.css -o css/app.css --minify",
+    "pack": "node build/pack.js",
+    "build": "npm run css && npm run pack"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.14"
+  }
+}

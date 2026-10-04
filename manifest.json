@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Gaidrid",
+  "version": "1.0.0",
+  "homepage_url": "https://dratiux.github.io/Gaidrid/",
+  "description": "Calm new-tab workspace: multi-engine search, clock, weather, shortcuts, focus timer, notes, sports scores and RSS news.",
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": ["storage"],
+  "optional_permissions": ["topSites"],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "host_permissions": [
+    "https://*.open-meteo.com/*"
+  ],
+  "action": {
+    "default_title": "Gaidrid",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https: http:;"
+  }
+}

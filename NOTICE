@@ -1,0 +1,29 @@
+Gaidrid
+Copyright (c) 2026 dratiux
+
+This product bundles third-party components. Their licenses are as follows:
+
+1. Font Awesome Free 6.5.1
+   https://fontawesome.com/license/free
+   Icons: CC BY 4.0 · Fonts: SIL OFL 1.1 · Code: MIT
+   Location: vendor/fontawesome/
+
+2. Albert Sans typeface (Regular, Medium, SemiBold, Bold)
+   SIL Open Font License 1.1 — full text: assets/fonts/OFL.txt
+   Location: assets/fonts/
+
+3. Tailwind CSS
+   MIT License
+   Build-time toolchain only (npm devDependency); the compiled utility
+   stylesheet ships as css/app.css. No Tailwind runtime is bundled.
+
+4. Readability.js (Mozilla Foundation, DOM article extraction)
+   Apache License 2.0
+   Location: vendor/Readability.js
+
+5. Search engine marks (Google, YouTube, Bing, DuckDuckGo, Brave, Yahoo, Ecosia)
+   Trademarks of their respective owners, used to identify the selectable
+   search engines. Location: assets/engines/
+
+All other code and artwork in this package is part of Gaidrid and is
+provided as-is, without warranty.

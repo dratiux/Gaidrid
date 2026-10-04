@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="172" viewBox="0 0 64 43">
+	<path shape-rendering="crispEdges" fill-rule="evenodd" fill="#535353" d="M32,0h16v2h2v9h-10v2h6v2h-8v4h4v4h-2v-2h-2v7h-2v3h-2v2h-2v8h2v2h-4v-6h-2v-2h-2v2h-2v2h-2v2h2v2h-4v-8h-2v-2h-2v-2h-2v-2h-2v-2h-2v-12h2v4h2v2h2v2h4v-2h2v-2h3v-2h3v-2h2v-13h2zM34,3h2v2h-2zM0,35h16v1h-16zM36,35h28v1h-28zM55,38h3v1h-3zM6,39h4v1h-4zM41,41h1v1h-1zM0,42h4v1h-4zM14,42h2v1h-2zM48,42h4v1h-4z"/>
+</svg>

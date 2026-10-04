@@ -1,0 +1,22 @@
+# Dependencies & build output
+node_modules/
+dist/
+tests/
+
+# Extension packages
+*.zip
+*.crx
+*.pem
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.log
+
+# Test / tooling artifacts
+test-results/
+playwright-report/
+coverage/

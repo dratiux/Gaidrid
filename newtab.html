@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New tab</title>
+    <link rel="icon" type="image/svg+xml" href="assets/icons/gaidrid-logo.svg">
+    <!-- Pre-paint theme (must stay first: blocks parser before first paint) -->
+    <script src="js/theme-init.js"></script>
+    <!-- Local vendor (offline, store-compliant): FontAwesome -->
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/gaidrid.css">
+</head>
+<body class="bg-[#EEEEEE] dark:bg-[#212832] text-[#212832] dark:text-[#EEEEEE] h-full overflow-hidden transition-colors duration-300 relative">
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#EEEEEE] dark:bg-[#212832] transition-opacity duration-500">
+        <img src="assets/gaidrid-logotype.svg" alt="Gaidrid" class="brand-logo splash-logo h-12 w-auto">
+    </div>
+
+    <!-- Faint engine watermark in center background (swap files in assets/engines/) -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden opacity-[0.08] dark:opacity-[0.09] transition-all duration-500">
+        <img id="bgWatermark" src="assets/engines/google.svg" alt="" class="w-[850px] h-[850px] max-w-[90vw] max-h-[90vh] object-contain transition-all duration-500">
+    </div>
+
+    <!-- MAIN WRAPPER CONTAINER -->
+    <div class="flex flex-col h-screen justify-between p-6 relative z-10">
+        <!-- TOP NAVIGATION HEADER -->
+        <header class="flex items-center justify-end w-full relative z-20">
+            <div class="flex items-center gap-3">
+                <!-- Apps Grid Drawer Button -->
+                <button id="appsDrawerBtn" class="w-9 h-9 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200/60 dark:hover:bg-gray-800 transition-all" title="Shortcuts">
+                    <i class="fa-solid fa-grip text-base"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- SIDE DOCK (fixed left edge: settings, sports, news, pomo, notes) -->
+        <div class="fixed left-6 top-6 z-20 flex items-center gap-1">
+            <button type="button" id="settingsBtn" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Settings">
+                <i class="fa-solid fa-gear text-base"></i>
+            </button>
+            <div class="w-px h-5 bg-gray-300 dark:bg-white/15"></div>
+            <button type="button" id="sportsBtn" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Sports scores">
+                <i class="fa-solid fa-trophy text-base"></i>
+            </button>
+            <button type="button" id="newsBtn" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="News / RSS">
+                <i class="fa-solid fa-newspaper text-base"></i>
+            </button>
+            <button type="button" id="pomoBtn" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Focus timer">
+                <i class="fa-solid fa-stopwatch text-base"></i>
+            </button>
+            <button type="button" id="notesBtn" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Quick notes">
+                <i class="fa-solid fa-note-sticky text-base"></i>
+            </button>
+        </div>
+
+        <!-- MAIN CENTER HERO SECTION -->
+        <main class="flex-1 flex flex-col items-center justify-center w-full max-w-4xl mx-auto my-auto relative z-10 px-4">
+
+            <!-- LIVE CLOCK & DATE DISPLAY -->
+            <div class="text-center mb-6">
+                <div id="digitalGreeting" class="text-xs sm:text-sm font-semibold tracking-wider text-google-blue dark:text-[#8AB4F8] uppercase mb-1.5 transition-all">
+                    Good Morning
+                </div>
+                <div id="digitalClock" class="text-5xl sm:text-6xl md:text-7xl font-extralight tracking-tight text-[#212832] dark:text-[#EEEEEE] transition-all duration-300">
+                    05:38
+                </div>
+                <div id="digitalDate" class="text-xs sm:text-sm font-medium text-gray-400 dark:text-gray-400 tracking-wider mt-1.5 uppercase transition-all">
+                    Sunday, 25 Nov
+                </div>
+                <div id="quoteText" class="mt-2.5 text-center text-xs italic text-gray-400 dark:text-gray-500 px-6"></div>
+            </div>
+
+            <!-- SEARCH CONTAINER -->
+            <div id="searchWrap" class="relative w-full max-w-2xl transition-all duration-300 my-2">
+
+                <!-- MAIN FLOATING SEARCH PILL BAR -->
+                <form id="searchForm" class="relative z-10">
+                    <div class="relative flex items-center bg-white dark:bg-white/[0.07] rounded-full shadow-float border border-white/60 dark:border-white/10 p-1.5 sm:p-2 transition-all duration-300 focus-within:shadow-2xl">
+                        
+                        <!-- VERTICAL SCROLLABLE SEARCH ENGINE REEL -->
+                        <div id="engineReelWrap" class="relative flex flex-col items-center justify-center pl-2.5 sm:pl-3 pr-1 group cursor-grab active:cursor-grabbing select-none shrink-0" title="Scroll or Drag up/down to change search engine">
+                            
+                            <!-- Up Hint Arrow -->
+                            <div id="engineArrowUp" class="absolute -top-2 left-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500 hidden">
+                                <i class="fa-solid fa-chevron-up hint-up"></i>
+                            </div>
+
+                            <!-- Vertical Engine Wheel Picker (Responsive dynamic fit) -->
+                            <div id="engineReel" class="mode-reel-container overflow-y-auto overflow-x-hidden no-scrollbar w-24 sm:w-28 flex flex-col items-center">
+                                
+                                <!-- Google -->
+                                <div data-engine="google" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105">
+                                    <div class="flex items-center gap-1.5">
+                                        <img src="assets/engines/google.svg" alt="Google" class="w-5 h-5 object-contain shrink-0">
+                                        <span class="inline-flex items-center"><span class="text-google-blue">G</span><span class="text-google-red">o</span><span class="text-google-yellow">o</span><span class="text-google-blue">g</span><span class="text-google-green">l</span><span class="text-google-red">e</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- YouTube -->
+                                <div data-engine="youtube" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#FF0000]">
+                                    <div class="flex items-center gap-1.5">
+                                        <img src="assets/engines/youtube.svg" alt="YouTube" class="w-5 h-5 object-contain shrink-0">
+                                        <span>YouTube</span>
+                                    </div>
+                                </div>
+
+                                <!-- Bing -->
+                                <div data-engine="bing" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#00838F] dark:text-[#00ACC1]">
+                                    <div class="flex items-center gap-1.5">
+                                        <img src="assets/engines/bing.svg" alt="Bing" class="w-5 h-5 object-contain shrink-0">
+                                        <span>Bing</span>
+                                    </div>
+                                </div>
+
+                                <!-- DuckDuckGo -->
+                                <div data-engine="duckduckgo" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-xs sm:text-sm transition-transform hover:scale-105 text-[#DE5833]">
+                                    <div class="flex items-center gap-1.5">
+                                        <img src="assets/engines/duckduckgo.svg" alt="DuckDuckGo" class="w-5 h-5 object-contain shrink-0">
+                                        <span>DuckDuck</span>
+                                    </div>
+                                </div>
+
+                                <!-- Brave -->
+                                <div data-engine="brave" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#FF1B2D]">
+                                    <div class="flex items-center gap-1.5">
+                                        <img src="assets/engines/brave.svg" alt="Brave" class="w-5 h-5 object-contain shrink-0">
+                                        <span>Brave</span>
+                                    </div>
+                                </div>
+
+                                <!-- Yahoo -->
+                                <div data-engine="yahoo" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#6001D2] dark:text-[#9D4EDD]">
+                                    <div class="flex items-center gap-1.5">
+                                        <img src="assets/engines/yahoo.svg" alt="Yahoo" class="w-5 h-5 object-contain shrink-0">
+                                        <span>Yahoo!</span>
+                                    </div>
+                                </div>
+
+                                <!-- Ecosia -->
+                                <div data-engine="ecosia" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#00897B] dark:text-[#26A69A]">
+                                    <div class="flex items-center gap-1.5">
+                                        <img src="assets/engines/ecosia.svg" alt="Ecosia" class="w-5 h-5 object-contain shrink-0">
+                                        <span>Ecosia</span>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- Down Hint Arrow -->
+                            <div id="engineArrowDown" class="absolute -bottom-2 left-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500">
+                                <i class="fa-solid fa-chevron-down hint-down"></i>
+                            </div>
+                        </div>
+
+                        <!-- Active Mode Badge (Tightly attached next to Engine Name) -->
+                        <span id="activeModeBadge" class="hidden text-[10px] font-semibold uppercase px-2 py-0.5 bg-google-blue/10 text-google-blue rounded-full transition-all shrink-0 ml-0.5 mr-1">
+                            All
+                        </span>
+
+                        <div class="h-6 w-[1px] bg-gray-200 dark:bg-white/10 mx-1 shrink-0"></div>
+
+                        <!-- Search Input Text Field -->
+                        <input type="text" id="searchInput" placeholder="Search Google or type a URL" autocomplete="off" class="w-full bg-transparent border-none outline-none px-3 text-gray-800 dark:text-gray-100 text-sm sm:text-base placeholder-gray-400 dark:placeholder-gray-500 font-normal">
+
+                        <!-- Clear Search Text Button -->
+                        <button type="button" id="clearSearchBtn" class="hidden text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700/50 shrink-0">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+
+                        <!-- Relocated Voice Search Mic Button -->
+                        <button type="button" id="voiceSearchBtn" class="w-9 h-9 flex items-center justify-center rounded-full text-google-red hover:bg-red-50 dark:hover:bg-red-950/30 transition-all focus:outline-none active:scale-90 mr-1 shrink-0" title="Search by Voice">
+                            <i class="fa-solid fa-microphone text-base"></i>
+                        </button>
+
+                        <!-- Separator line before Vertical Reel -->
+                        <div class="h-7 w-[1px] bg-gray-200 dark:bg-white/10 mx-1 shrink-0"></div>
+
+                        <!-- VERTICAL SCROLLABLE MODE REEL -->
+                        <div class="relative flex flex-col items-center justify-center px-1 group shrink-0" title="Scroll or Drag up/down to change mode">
+                            
+                            <!-- Up Hint Arrow (Hidden at top item) -->
+                            <div id="arrowUp" class="absolute -top-2 left-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500 hidden">
+                                <i class="fa-solid fa-chevron-up hint-up"></i>
+                            </div>
+
+                            <!-- Vertical Mode Wheel Picker -->
+                            <div id="modeReel" class="mode-reel-container overflow-y-auto overflow-x-hidden no-scrollbar w-10 sm:w-11 flex flex-col items-center cursor-grab active:cursor-grabbing select-none">
+                                
+                                <!-- Mode 1: All -->
+                                <div data-mode="all" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-google-blue font-bold text-xs shadow-xs">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Mode 2: News -->
+                                <div data-mode="news" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-yellow-50 dark:bg-yellow-950/40 text-google-yellow font-bold text-xs shadow-xs">
+                                        <i class="fa-solid fa-bullhorn"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Mode 3: Maps -->
+                                <div data-mode="maps" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-green-50 dark:bg-green-950/40 text-google-green font-bold text-xs shadow-xs">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Mode 4: Images -->
+                                <div data-mode="images" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-google-blue font-bold text-xs shadow-xs">
+                                        <i class="fa-solid fa-image"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Mode 5: Videos -->
+                                <div data-mode="videos" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-red-50 dark:bg-red-950/40 text-google-red font-bold text-xs shadow-xs">
+                                        <i class="fa-solid fa-play text-[10px]"></i>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- Down Hint Arrow (Hidden at bottom item) -->
+                            <div id="arrowDown" class="absolute -bottom-2 left-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500">
+                                <i class="fa-solid fa-chevron-down hint-down"></i>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- AUTOCOMPLETE / SUGGESTIONS DROPDOWN -->
+                    <div id="suggestionsBox" class="hidden absolute left-0 right-0 top-full mt-2 bg-white/95 dark:bg-[#232c38]/95 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden z-30 transition-all">
+                        <div class="py-2" id="suggestionsList">
+                            <!-- Dynamic items injected here -->
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+
+            <!-- OFFLINE: dino game replaces the search bar -->
+            <div id="dinoHost" class="w-full max-w-2xl my-2">
+                <iframe id="dinoFrame" title="Offline dino game"></iframe>
+            </div>
+
+            <!-- FREQUENTLY VISITED -->
+            <div id="topSitesWrap" class="w-full max-w-2xl mx-auto mt-6 hidden">
+                <div class="text-[11px] font-semibold tracking-wider uppercase text-gray-400 dark:text-gray-500 text-center mb-2.5">Frequently visited</div>
+                <div id="topSitesGrid" class="flex items-start justify-center gap-1.5 flex-wrap"></div>
+                <button id="topSitesEnable" class="hidden w-full py-3.5 rounded-2xl border border-dashed border-gray-300 dark:border-white/15 text-xs font-medium text-gray-500 dark:text-gray-400 hover:border-google-blue hover:text-google-blue active:scale-[.99] transition-all">Enable frequently visited</button>
+            </div>
+        </main>
+
+        <!-- BOTTOM FOOTER (Weather & Information) -->
+        <footer class="flex items-center justify-between w-full relative z-10 text-xs">
+            <!-- Bottom Left Weather Widget -->
+            <div id="weatherWidget" class="flex items-center gap-2.5 bg-white/70 dark:bg-white/[0.07] border border-gray-200/50 dark:border-white/10 px-3.5 py-2 rounded-full shadow-sm backdrop-blur-md cursor-pointer hover:bg-white dark:hover:bg-white/10 transition-all" title="Click to refresh weather">
+                <!-- Dynamic Weather Icon -->
+                <div id="weatherIconContainer" class="relative w-6 h-6 flex items-center justify-center">
+                    <i id="weatherIcon" class="fa-solid fa-sun text-google-yellow text-lg transition-all duration-300"></i>
+                </div>
+                <div class="flex items-baseline gap-1.5 font-medium text-gray-700 dark:text-gray-200">
+                    <span id="weatherLocation" class="text-xs font-semibold text-gray-500 dark:text-gray-400">Cairo •</span>
+                    <span id="weatherCondition">Sunny,</span>
+                    <span id="weatherTemp" class="font-semibold text-gray-900 dark:text-white">28°C</span>
+                </div>
+            </div>
+
+            <!-- Bottom Right Extension Info Icon -->
+            <button id="infoBtn" class="self-stretch aspect-square rounded-full flex items-center justify-center bg-white/70 dark:bg-white/[0.07] border border-gray-200/50 dark:border-white/10 text-gray-500 hover:text-gray-800 dark:hover:text-white shadow-sm backdrop-blur-md transition-all" title="About Extension">
+                <i class="fa-solid fa-info text-xs"></i>
+            </button>
+        </footer>
+    </div>
+
+    <!-- RIGHT SIDE GOOGLE APPS DRAWER SIDEBAR -->
+    <div id="appsOverlay" class="fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-xs z-40 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+    <aside id="appsDrawer" class="fixed top-0 right-0 bottom-0 w-80 sm:w-96 bg-white/95 dark:bg-[#232c38]/95 border-l border-gray-200/80 dark:border-white/10 shadow-drawer z-50 transform translate-x-full transition-transform duration-300 ease-out flex flex-col justify-between overflow-hidden backdrop-blur-2xl">
+        <!-- Drawer Header -->
+        <div class="p-6 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <h3 class="font-semibold text-base text-gray-800 dark:text-gray-100">Shortcuts</h3>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="openAddAppBtn" class="w-8 h-8 flex items-center justify-center rounded-full bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white transition-all text-xs" title="Add Application">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <button id="closeDrawerBtn" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Drawer Apps Grid (Dynamic Drag & Drop) -->
+        <div class="flex-1 overflow-y-auto p-6 no-scrollbar">
+            <p class="text-[11px] text-gray-400 dark:text-gray-500 mb-4 text-center">Drag and drop items to reorder</p>
+            <div id="appsGrid" class="grid grid-cols-3 gap-y-5 gap-x-3 text-center">
+                <!-- Dynamically populated popular apps -->
+            </div>
+        </div>
+    </aside>
+
+    <!-- ADD NEW APPLICATION MODAL -->
+    <div id="addAppModal" role="dialog" aria-modal="true" aria-label="Add shortcut" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="addAppTitle" class="text-base font-semibold text-gray-800 dark:text-gray-100">Add Application Shortcut</h3>
+                <button id="closeAddAppBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="addAppForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                    <input type="text" id="appTitleInput" required placeholder="e.g. GitHub" class="w-full bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-100 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">URL</label>
+                    <input type="url" id="appUrlInput" required placeholder="https://github.com" class="w-full bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-100 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Icon</label>
+                    <div class="flex items-center gap-2">
+                        <span id="appIconPreview" class="w-9 h-9 rounded-xl bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 flex items-center justify-center text-lg text-gray-600 dark:text-gray-300 overflow-hidden shrink-0"><i class="fa-solid fa-globe"></i></span>
+                        <input type="text" id="appIconSearch" autocomplete="off" placeholder="Search icons, e.g. github" class="flex-1 min-w-0 bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-100 outline-none transition-all">
+                    </div>
+                    <input type="hidden" id="appIconInput" value="fa-solid fa-globe">
+                    <div id="appIconResults" class="hidden mt-2 grid grid-cols-6 gap-1.5 max-h-36 overflow-y-auto no-scrollbar"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                    <div id="appColorRow" class="flex gap-1.5 flex-wrap"></div>
+                    <input type="hidden" id="appColorInput" value="bg-blue-50 text-google-blue dark:bg-blue-950/40">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" id="cancelAddAppBtn" class="px-3 py-1.5 rounded-xl text-xs font-medium text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+                    <button type="submit" id="addAppSubmit" class="px-4 py-1.5 bg-google-blue text-white rounded-xl text-xs font-semibold hover:bg-blue-600 transition-colors">Add App</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- VOICE SEARCH SIMULATOR MODAL -->
+    <div id="voiceModal" role="dialog" aria-modal="true" aria-label="Voice input" class="fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#232c38] rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl text-center relative flex flex-col items-center">
+            <button id="closeVoiceBtn" class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-8" id="voiceStatusText">Listening...</h3>
+
+            <!-- Animated Mic Circle -->
+            <div class="relative flex items-center justify-center my-4">
+                <div class="absolute w-28 h-28 bg-google-red/20 rounded-full voice-pulse"></div>
+                <div class="w-20 h-20 bg-google-red text-white rounded-full flex items-center justify-center text-3xl shadow-lg relative z-10">
+                    <i class="fa-solid fa-microphone"></i>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-400 mt-8">Try saying: "Weather today" or "Google maps"</p>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" role="dialog" aria-modal="true" aria-label="Settings" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">
+                    New Tab Preferences
+                </h3>
+                <button id="closeSettingsBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 max-h-[65vh] overflow-y-auto pr-1 no-scrollbar">
+                <!-- General Section Header -->
+                <div>
+                    <h4 class="text-xs font-bold text-google-blue dark:text-google-blue uppercase tracking-wider mb-3">General</h4>
+                </div>
+
+                <!-- Display Name -->
+                <div>
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Display name</div>
+                    <input type="text" id="userNameInput" autocomplete="off" placeholder="Your name (optional)" class="w-full bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-gray-800 dark:text-gray-100 outline-none transition-all shadow-xs">
+                </div>
+
+                <!-- Frequently Visited Toggle -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Frequently visited</div>
+                        <div class="text-xs text-gray-400">Show most-visited sites under search</div>
+                    </div>
+                    <button id="showTopBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="showTopCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></div>
+                    </button>
+                </div>
+                <!-- Appearance -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Appearance</div>
+                        <div class="text-xs text-gray-400">Light, dark, or follow system</div>
+                    </div>
+                    <div class="flex bg-gray-100 dark:bg-white/[0.06] p-1 rounded-lg text-xs font-medium shrink-0">
+                        <button id="themeLight" class="px-2.5 py-1 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">Light</button>
+                        <button id="themeDark" class="px-2.5 py-1 rounded-md bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-xs font-semibold">Dark</button>
+                        <button id="themeAuto" class="px-2.5 py-1 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">Auto</button>
+                    </div>
+                </div>
+
+                <!-- Clock Customization Section Header -->
+                <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                    <h4 class="text-xs font-bold text-google-blue dark:text-google-blue uppercase tracking-wider mb-3">Clock Customization</h4>
+                </div>
+
+                <!-- Clock Format -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">24-Hour Time Format</div>
+                        <div class="text-xs text-gray-400">Display time as 05:38 vs 05:38 AM</div>
+                    </div>
+                    <button id="clockFormatBtn" class="w-12 h-6 bg-gray-200 dark:bg-white/10 rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="clockToggleCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-0"></div>
+                    </button>
+                </div>
+
+                <!-- Show Seconds -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Show Seconds</div>
+                        <div class="text-xs text-gray-400">Display live ticking seconds (05:38:12)</div>
+                    </div>
+                    <button id="showSecondsBtn" class="w-12 h-6 bg-gray-200 dark:bg-white/10 rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="secondsToggleCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-0"></div>
+                    </button>
+                </div>
+
+                <!-- Show Date -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Show Date</div>
+                        <div class="text-xs text-gray-400">Display day and month beneath clock</div>
+                    </div>
+                    <button id="showDateBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="dateToggleCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></div>
+                    </button>
+                </div>
+
+                <!-- Time Greeting -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Time Greeting</div>
+                        <div class="text-xs text-gray-400">Display contextual greeting ("Good Morning")</div>
+                    </div>
+                    <button id="showGreetingBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="greetingToggleCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></div>
+                    </button>
+                </div>
+
+                <!-- Weather Customization Section Header -->
+                <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                    <h4 class="text-xs font-bold text-google-blue dark:text-google-blue uppercase tracking-wider mb-3">Weather Preferences</h4>
+                </div>
+
+                <!-- 1. Show Weather Widget Toggle -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Show Weather Widget</div>
+                        <div class="text-xs text-gray-400">Display weather info in bottom footer</div>
+                    </div>
+                    <button id="showWeatherBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="weatherToggleCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></div>
+                    </button>
+                </div>
+
+                <!-- 1b. Use Current Location -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Use current location</div>
+                        <div class="text-xs text-gray-400">Use browser geolocation instead of city</div>
+                    </div>
+                    <button id="useGeoBtn" class="w-12 h-6 bg-gray-200 dark:bg-white/10 rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="geoToggleCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-0"></div>
+                    </button>
+                </div>
+
+                <!-- 2. Custom City / Location Input (Moved directly under Show Weather Widget) -->
+                <div class="pt-1 relative">
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">City Location</div>
+                    <div class="text-xs text-gray-400 mb-2">Set custom location or leave blank for default</div>
+                    <div class="relative">
+                        <input type="text" id="weatherLocationInput" autocomplete="off" placeholder="e.g. Cairo, Alexandria, London" value="Cairo" class="w-full bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-gray-800 dark:text-gray-100 outline-none transition-all shadow-xs">
+                        
+                        <!-- City Suggestions Dropdown -->
+                        <div id="citySuggestionsBox" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden z-50 max-h-40 overflow-y-auto no-scrollbar">
+                            <div id="citySuggestionsList" class="py-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Temperature Scale -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Temperature Scale</div>
+                        <div class="text-xs text-gray-400">Choose between Celsius (°C) and Fahrenheit (°F)</div>
+                    </div>
+                    <div class="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg text-xs font-medium shrink-0">
+                        <button id="unitC" class="px-2.5 py-1 rounded-md bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-xs">°C</button>
+                        <button id="unitF" class="px-2.5 py-1 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">°F</button>
+                    </div>
+                </div>
+
+                <!-- 4. Show Condition Text -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Show Weather Status</div>
+                        <div class="text-xs text-gray-400">Display status text (e.g. "Sunny")</div>
+                    </div>
+                    <button id="showConditionBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="conditionToggleCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></div>
+                    </button>
+                </div>
+                <!-- Sports Section Header -->
+                <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                    <h4 class="text-xs font-bold text-google-blue dark:text-google-blue uppercase tracking-wider mb-3">Sports</h4>
+                </div>
+
+                <!-- Default League -->
+                <div>
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Default league</div>
+                    <div id="defLeagueRow" class="flex gap-1.5 flex-wrap"></div>
+                    <div class="text-xs text-gray-400 mt-1">Pick a favorite team with the star inside the Sports window</div>
+                </div>
+
+                <!-- Auto Refresh -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Auto-refresh scores</div>
+                        <div class="text-xs text-gray-400">Update live scores every minute while open</div>
+                    </div>
+                    <button id="sportsAutoBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="sportsAutoCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></div>
+                    </button>
+                </div>
+
+                <!-- Show Finished -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Show finished matches</div>
+                        <div class="text-xs text-gray-400">Hide FT results to focus on live and upcoming</div>
+                    </div>
+                    <button id="sportsFinishedBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="sportsFinishedCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></div>
+                    </button>
+                </div>
+                <!-- News Section Header -->
+                <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                    <h4 class="text-xs font-bold text-google-blue dark:text-google-blue uppercase tracking-wider mb-3">News / RSS</h4>
+                </div>
+
+                <!-- News Feeds -->
+                <div>
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">News feeds</div>
+                    <div id="newsFeedsList" class="space-y-1.5"></div>
+                    <div class="flex gap-2 mt-2">
+                        <input type="url" id="newsFeedInput" placeholder="https://example.com/feed.xml" class="flex-1 min-w-0 bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-sm text-gray-800 dark:text-gray-100 outline-none transition-all">
+                        <button type="button" id="newsFeedAdd" class="px-3.5 rounded-xl text-xs font-semibold bg-google-blue text-white hover:bg-blue-600 transition-all shrink-0">Add</button>
+                    </div>
+                    <div id="newsFeedErr" class="hidden text-xs text-red-500 mt-1">Enter a valid http(s) feed URL</div>
+                    <div class="text-xs text-gray-400 mt-1">Feeds are read directly in the News window (one-time site access)</div>
+                </div>
+
+                <!-- Auto Refresh News -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Auto-refresh news</div>
+                        <div class="text-xs text-gray-400">Update the feed every minute while open</div>
+                    </div>
+                    <button id="newsAutoBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
+                        <div id="newsAutoCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></div>
+                    </button>
+                </div>
+                <!-- Backup Section Header -->
+                <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                    <h4 class="text-xs font-bold text-google-blue dark:text-google-blue uppercase tracking-wider mb-3">Backup</h4>
+                </div>
+
+                <!-- Export / Import -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Backup settings</div>
+                        <div id="backupStatus" class="text-xs text-gray-400">Export or import a JSON backup</div>
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button id="exportBtn" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 transition-all">Export</button>
+                        <button id="importBtn" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 transition-all">Import</button>
+                        <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTES MODAL -->
+    <div id="notesModal" role="dialog" aria-modal="true" aria-label="Notes" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-white/10">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">Quick notes</h3>
+                <button id="closeNotesBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <textarea id="notesArea" rows="8" placeholder="Jot something down..." class="w-full bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 outline-none transition-all resize-none"></textarea>
+            <div class="mt-2 flex items-center">
+                <span id="notesSaved" class="text-[11px] text-gray-400">Saved automatically</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ONBOARDING MODAL (first run only) -->
+    <div id="onboardModal" role="dialog" aria-modal="true" aria-label="Welcome to Gaidrid" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-white/10 text-center">
+            <div class="flex justify-center mb-4">
+                <img src="assets/gaidrid-logotype.svg" alt="Gaidrid" class="brand-logo h-9 w-auto">
+            </div>
+            <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">Welcome to Gaidrid</h3>
+            <p class="text-xs text-gray-400 mt-1 mb-4">One Tab. Everything.</p>
+            <div class="text-left space-y-2.5 text-sm text-gray-600 dark:text-gray-300">
+                <div class="flex items-center gap-2.5"><i class="fa-solid fa-keyboard text-[11px] text-gray-400 w-4 text-center"></i><span>Press <b>/</b> anywhere to search</span></div>
+                <div class="flex items-center gap-2.5"><i class="fa-solid fa-arrows-up-down text-[11px] text-gray-400 w-4 text-center"></i><span>Swap engines with the side reels</span></div>
+                <div class="flex items-center gap-2.5"><i class="fa-solid fa-gear text-[11px] text-gray-400 w-4 text-center"></i><span>Make it yours in settings</span></div>
+            </div>
+            <div class="mt-6">
+                <button id="onboardDoneBtn" class="w-full px-4 py-2 bg-google-blue text-white rounded-xl text-xs font-semibold hover:bg-blue-600 transition-colors">
+                    Get started
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPORTS MODAL -->
+    <div id="sportsModal" role="dialog" aria-modal="true" aria-label="Sports" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-white/10">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">Sports</h3>
+                <div class="flex items-center gap-1">
+                    <button id="sportsRefreshBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Refresh scores">
+                        <i class="fa-solid fa-rotate text-xs"></i>
+                    </button>
+                    <button id="closeSportsBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div role="tablist" class="flex bg-gray-100 dark:bg-white/[0.06] p-1 rounded-lg text-xs font-medium mb-3">
+                <button id="sportsTabMatches" role="tab" aria-selected="true" class="flex-1 px-2.5 py-1 rounded-md">Matches</button>
+                <button id="sportsTabTable" role="tab" aria-selected="false" class="flex-1 px-2.5 py-1 rounded-md">Table</button>
+            </div>
+                    <div id="sportsLeagues" class="flex flex-wrap gap-1.5 mb-3"></div>
+            <div id="sportsDayRow" class="flex items-center justify-between mb-3">
+                <button id="sportsPrevDay" aria-label="Previous day" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Previous day">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <span id="sportsDayLabel" aria-live="polite" class="text-xs font-semibold text-gray-600 dark:text-gray-300">Today</span>
+                <button id="sportsNextDay" aria-label="Next day" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Next day">
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+            </div>
+            <div id="sportsBody" class="space-y-2 max-h-[45vh] overflow-y-auto no-scrollbar min-h-[120px]"></div>
+            <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <span class="text-[11px] text-gray-400">Data by ESPN</span>
+                <span id="sportsUpdated" class="text-[11px] text-gray-400"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEWS MODAL -->
+    <div id="newsModal" role="dialog" aria-modal="true" aria-label="News" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl border border-gray-100 dark:border-white/10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2 min-w-0">
+                    <button id="newsBackBtn" class="hidden w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all shrink-0" aria-label="Back to news list">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </button>
+                    <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100 truncate">News</h3>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                    <button id="newsRefreshBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Refresh feeds">
+                        <i class="fa-solid fa-rotate text-xs"></i>
+                    </button>
+                    <button id="closeNewsBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="newsList" class="space-y-2 max-h-[55vh] overflow-y-auto no-scrollbar min-h-[120px]"></div>
+            <article id="newsArticle" class="hidden max-h-[55vh] overflow-y-auto no-scrollbar pr-1"></article>
+            <div id="newsArticleFoot" class="hidden mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3">
+                <span id="newsArticleSource" class="text-[11px] text-gray-400 truncate"></span>
+                <a id="newsOpenTab" href="#" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-google-blue text-white hover:bg-blue-600 transition-all flex items-center gap-1.5 shrink-0">Open in new tab<i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- POMODORO MODAL -->
+    <div id="pomoModal" role="dialog" aria-modal="true" aria-label="Focus timer" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-white/10 text-center">
+            <div class="flex items-center justify-between mb-1">
+                <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">Focus timer</h3>
+                <button id="closePomoBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="pomoLabel" class="text-[11px] font-semibold tracking-wider uppercase text-gray-400">Focus</div>
+            <div id="pomoTime" class="text-5xl font-extralight tabular-nums tracking-tight text-[#212832] dark:text-[#EEEEEE] my-3">25:00</div>
+            <div class="flex items-center justify-center gap-2">
+                <button type="button" id="pomoToggle" class="px-4 py-2 rounded-xl bg-google-blue text-white text-xs font-semibold hover:bg-blue-600 transition-colors flex items-center gap-1.5" title="Start focus timer">
+                    <i id="pomoToggleIcon" class="fa-solid fa-play text-[10px]"></i><span>Start</span>
+                </button>
+                <button type="button" id="pomoReset" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Reset timer">
+                    <i class="fa-solid fa-rotate-left text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABOUT MODAL -->
+    <div id="aboutModal" role="dialog" aria-modal="true" aria-label="About Gaidrid" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-white/10 text-center relative">
+            <button id="closeAboutBtn" class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex justify-center mb-4 pt-2">
+                <img src="assets/gaidrid-logotype.svg" alt="Gaidrid" class="brand-logo h-9 w-auto">
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5 mb-3">Version 1.0.0</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">One Tab. Everything.</p>
+            <div class="mt-4 flex items-center justify-center gap-2">
+                <a href="https://facebook.com/gaidrid" target="_blank" rel="noopener" aria-label="Facebook" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#1877F2] hover:border-[#1877F2]/40 transition-all">
+                    <i class="fa-brands fa-facebook-f text-sm"></i>
+                </a>
+                <a href="https://instagram.com/gaidrid" target="_blank" rel="noopener" aria-label="Instagram" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#E4405F] hover:border-[#E4405F]/40 transition-all">
+                    <i class="fa-brands fa-instagram text-sm"></i>
+                </a>
+                <a href="https://x.com/gaidrid" target="_blank" rel="noopener" aria-label="X" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/30 transition-all">
+                    <i class="fa-brands fa-x-twitter text-sm"></i>
+                </a>
+                <a href="https://www.threads.com/@gaidrid" target="_blank" rel="noopener" aria-label="Threads" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/30 transition-all">
+                    <i class="fa-brands fa-threads text-sm"></i>
+                </a>
+                <a href="https://github.com/dratiux/Gaidrid" target="_blank" rel="noopener" aria-label="GitHub" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#181717] dark:hover:text-white hover:border-[#181717]/40 dark:hover:border-white/30 transition-all">
+                    <i class="fa-brands fa-github text-sm"></i>
+                </a>
+            </div>
+            <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <a href="https://dratiux.com" target="_blank" rel="noopener" class="block hover:opacity-80 transition-opacity">
+                    <div class="flex justify-center">
+                        <img src="assets/dratiux.svg" alt="dratiux" class="h-5 w-auto brightness-0 dark:brightness-100">
+                    </div>
+                    <div class="mt-1 text-[9px] font-semibold tracking-[0.2em] text-gray-400">CRAFTED WITH CARE BY DRATIUX</div>
+                </a>
+                <div class="mt-3 flex items-center justify-center gap-2">
+                    <a href="https://paypal.me/dratiux" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 transition-all flex items-center gap-1.5">
+                        <i class="fa-brands fa-paypal text-[#003087] dark:text-[#8AB4F8]"></i>PayPal
+                    </a>
+                    <a href="https://ko-fi.com/dratiux" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-heart text-[#FF5E5B]"></i>Ko-fi
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="vendor/Readability.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
