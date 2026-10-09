@@ -1,5 +1,13 @@
 // State Management
-        const state = {
+const NEWS_DEFAULTS = [
+    { name: 'Hacker News', url: 'https://news.ycombinator.com/rss', builtin: true },
+    { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', builtin: true },
+    { name: 'BBC News', url: 'https://feeds.bbci.co.uk/news/rss.xml', builtin: true },
+    { name: 'The Guardian', url: 'https://www.theguardian.com/world/rss', builtin: true },
+    { name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index', builtin: true },
+    { name: 'NPR News', url: 'https://feeds.npr.org/1001/rss.xml', builtin: true }
+];
+const state = {
             use24Hour: false,
             showSeconds: false,
             showDate: true,
@@ -28,18 +36,15 @@
             autoNightEnd: '07:00',
             sportsLeague: 'ucl',
             sportsDay: 0,
-            sportsFav: { ucl: null, epl: null, nba: null, nfl: null },
+            sportsFav: {},
             sportsAuto: true,
             sportsShowFinished: true,
-            newsFeeds: [
-                { name: 'Hacker News', url: 'https://news.ycombinator.com/rss', builtin: true },
-                { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', builtin: true },
-                { name: 'BBC News', url: 'https://feeds.bbci.co.uk/news/rss.xml', builtin: true },
-                { name: 'The Guardian', url: 'https://www.theguardian.com/world/rss', builtin: true },
-                { name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index', builtin: true },
-                { name: 'NPR News', url: 'https://feeds.npr.org/1001/rss.xml', builtin: true }
-            ],
+            pomoNotify: false,
+            newsFeeds: JSON.parse(JSON.stringify(NEWS_DEFAULTS)),
             newsAuto: true,
+            newsRead: [],
+            newsFilter: 'all',
+            newsFontStep: 0,
             suggestions: [
                 'edx pickup',
                 'google redesign search page',
@@ -906,7 +911,44 @@
             return [query, query + ' - Search ' + suggEngineName()];
         }
 
+        // Engine bang cheat-sheet: "!yt" rows fill the input instead of searching.
+        function fillBang(bang) {
+            if (!bang) return;
+            const cur = searchInput.value;
+            const m = cur.match(/^!(\w*)([\s\S]*)$/);
+            const after = (m && m[2] ? m[2].trim() : '');
+            searchInput.value = bang + (after ? ' ' + after : ' ');
+            suggestionsBox.classList.add('hidden');
+            searchInput.focus();
+        }
+        function renderBangHelp(query) {
+            const m = query.match(/^!(\w*)([\s\S]*)$/);
+            const typed = m ? m[1] : '';
+            const full = query.match(/^!(\w+)\s+([\s\S]+)$/);
+            // Complete bang with a query: one row, submit parses it (existing path).
+            if (full && BANGS[full[1]] && engineConfig[BANGS[full[1]]]) {
+                renderSuggestionItems([query]);
+                return;
+            }
+            const rows = Object.keys(BANGS)
+                .filter((k) => k.indexOf(typed) === 0 && engineConfig[BANGS[k]])
+                .map((k) => ({ key: k, name: engineConfig[BANGS[k]].name }));
+            if (!rows.length) { renderSuggestionItems([query]); return; }
+            suggestionsList.innerHTML = rows.map(function (r) {
+                return '<div class="suggestion-item px-5 py-2.5 hover:bg-gray-50 dark:hover:bg-white/10 flex items-center gap-3 cursor-pointer text-sm text-gray-700 dark:text-gray-200" data-bang="!' + r.key + '">'
+                    + '<i class="fa-solid fa-bolt text-google-blue text-xs"></i>'
+                    + '<span>!' + r.key + ' — ' + escHtml(r.name) + '</span></div>';
+            }).join('');
+            suggestionsBox.classList.remove('hidden');
+            suggActive = -1;
+            paintSuggActive();
+            document.querySelectorAll('.suggestion-item').forEach(function (el) {
+                el.addEventListener('click', function () { fillBang(el.getAttribute('data-bang')); });
+            });
+        }
+
         function showSuggestions(query) {
+            if (query.charAt(0) === '!') { renderBangHelp(query); return; }
             const calc = tryCalc(query);
             if (calc !== null) {
                 renderSuggestionItems(['= ' + calc]);
@@ -1135,8 +1177,8 @@
             editingAppId = (app && app.id) || null;
             const titleEl = document.getElementById('addAppTitle');
             const subEl = document.getElementById('addAppSubmit');
-            if (titleEl) titleEl.textContent = editingAppId ? 'Edit Shortcut' : 'Add Application Shortcut';
-            if (subEl) subEl.textContent = editingAppId ? 'Save' : 'Add App';
+            if (titleEl) titleEl.textContent = editingAppId ? 'Edit shortcut' : 'Add shortcut';
+            if (subEl) subEl.textContent = editingAppId ? 'Save' : 'Add shortcut';
             appTitleInput.value = app ? app.title : '';
             appUrlInput.value = app ? app.url : '';
             const hidden = document.getElementById('appIconInput');
@@ -1251,7 +1293,7 @@
         unitC.addEventListener('click', () => setTemperatureUnit(true));
         unitF.addEventListener('click', () => setTemperatureUnit(false));
 
-        // Keyboard Shortcut: Focus search input on 'Slash' or 'Ctrl+K'
+        // Keyboard Shortcut: Focus search input (rebindable binding + quick slash key)
         document.addEventListener('keydown', (e) => {
             if ((e.key === '/' || (e.ctrlKey && e.key === 'k')) && document.activeElement !== searchInput && !gaidridTyping() && !gaidridModalOpen()) {
                 e.preventDefault();
@@ -1259,7 +1301,7 @@
             }
         });
 
-/* ---- Gaidrid additions (extraction phase): config override + persistence ---- */
+/* ---- Gaidrid additions: config override + persistence ---- */
 (function gaidridInit() {
   var cfg = window.GaidridConfig || {};
   try {
@@ -1273,19 +1315,30 @@
   const KEY = 'gaidrid-prefs-v1';
   const hasChromeStorage = typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
   const syncStore = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) || null;
+  /* chrome.storage.sync caps (8KB/item, 100KB total): bulky/ephemeral keys
+     (notes, read history, transient view offsets) stay local-only; everything
+     the UI treats as a setting syncs across devices. */
+  const SYNC_KEYS = ['use24Hour', 'showSeconds', 'showDate', 'showGreeting', 'showWeather', 'showCondition',
+    'weatherLocation', 'isCelsius', 'userName', 'useGeolocation', 'geoLat', 'geoLon', 'geoAt',
+    'history', 'showTopSites', 'themeMode', 'accent', 'autoNight', 'autoNightStart', 'autoNightEnd',
+    'sportsLeague', 'sportsFav', 'sportsAuto', 'sportsShowFinished', 'pomoNotify',
+    'newsFeeds', 'newsAuto', 'newsFilter', 'newsFontStep',
+    'searchEngine', 'searchMode', 'apps', 'dark'];
   const mem = {
     get: (k) => new Promise((res) => {
-      const fromLocal = () => {
-        if (hasChromeStorage) chrome.storage.local.get(k, (r) => res(r && r[k]));
-        else { try { res(JSON.parse(localStorage.getItem(k) || 'null')); } catch (e) { res(null); } }
+      const fromLocal = (cb) => {
+        if (hasChromeStorage) chrome.storage.local.get(k, (r) => cb(r && r[k]));
+        else { try { cb(JSON.parse(localStorage.getItem(k) || 'null')); } catch (e) { cb(null); } }
       };
       if (syncStore) {
         try { syncStore.get(k, (r) => {
-          if (chrome.runtime && chrome.runtime.lastError) fromLocal();
-          else if (r && typeof r[k] !== 'undefined') res(r[k]);
-          else fromLocal();
-        }); } catch (e) { fromLocal(); }
-      } else fromLocal();
+          if (chrome.runtime && chrome.runtime.lastError) fromLocal((v) => res(v));
+          else fromLocal((v) => {
+            const merged = Object.assign({}, v || {}, (r && r[k]) || {});
+            res(Object.keys(merged).length ? merged : null);
+          });
+        }); } catch (e) { fromLocal((v) => res(v)); }
+      } else fromLocal((v) => res(v));
     }),
     set: (obj) => new Promise((res) => {
       try { for (const k of Object.keys(obj)) { try { localStorage.setItem(k, JSON.stringify(obj[k])); } catch (e) {} } } catch (e) {}
@@ -1294,8 +1347,11 @@
         else { try { for (const k of Object.keys(obj)) localStorage.setItem(k, JSON.stringify(obj[k])); } catch (e) {} res(); }
       };
       if (syncStore) {
-        try { syncStore.set(obj, () => {
+        const sub = {};
+        SYNC_KEYS.forEach((k) => { if (obj[k] !== undefined) sub[k] = obj[k]; });
+        try { syncStore.set(sub, () => {
           if (chrome.runtime && chrome.runtime.lastError) toLocal();
+          else if (hasChromeStorage) chrome.storage.local.set(obj, () => res());
           else res();
         }); } catch (e) { toLocal(); }
       } else toLocal();
@@ -1315,7 +1371,9 @@
       autoNightStart: state.autoNightStart, autoNightEnd: state.autoNightEnd,
       sportsLeague: state.sportsLeague, sportsDay: state.sportsDay,
       sportsFav: state.sportsFav, sportsAuto: state.sportsAuto, sportsShowFinished: state.sportsShowFinished,
+      pomoNotify: state.pomoNotify,
       newsFeeds: state.newsFeeds, newsAuto: state.newsAuto,
+      newsRead: state.newsRead, newsFilter: state.newsFilter, newsFontStep: state.newsFontStep,
       searchEngine: state.searchEngine, searchMode: state.searchMode, apps: state.apps,
       dark: document.documentElement.classList.contains('dark')
     };
@@ -1326,6 +1384,7 @@
   window.addEventListener('beforeunload', persistNow);
   document.addEventListener('visibilitychange', () => { if (document.hidden) persistNow(); });
   window.GaidridSave = function queueSave() { persistNow(); };
+  window.GaidridCollect = collect;
 
   mem.get(KEY).then((p) => {
     if (!p) { if (typeof applyTheme === 'function') applyTheme(); if (typeof showOnboarding === 'function') showOnboarding(); return; }
@@ -1333,6 +1392,7 @@
       const live = { tempC: state.tempC, weatherCode: state.weatherCode, isDay: state.isDay, suggestions: state.suggestions };
       Object.assign(state, p, live);
       if (!state.themeMode && typeof p.dark === 'boolean') state.themeMode = p.dark ? 'dark' : 'light';
+      migrateSportsFavs();
       if (typeof applyTheme === 'function') applyTheme();
       if (state.searchEngine && engineConfig[state.searchEngine]) setSearchEngine(state.searchEngine, true);
       if (state.searchMode) setSearchMode(state.searchMode, true);
@@ -1343,6 +1403,9 @@
       if (typeof syncSettingsUI === 'function') syncSettingsUI();
       if (typeof renderTopSites === 'function') renderTopSites();
       if (typeof fetchLiveWeather === 'function') fetchLiveWeather(state.weatherLocation || 'Cairo');
+      refreshSportsHome();
+      refreshNewsHome();
+      try { if (searchInput) searchInput.focus({ preventScroll: true }); } catch (e) {}
     } catch (e) { console.warn('Gaidrid restore failed:', e); }
   });
 })();
@@ -1353,6 +1416,8 @@ function paintToggle(btn, circle, on) {
   btn.className = on ? 'w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0'
     : 'w-12 h-6 bg-gray-200 dark:bg-white/10 rounded-full p-1 transition-colors relative shrink-0';
 }
+
+/* Engine bang cheat-sheet: "!yt" rows fill the input instead of searching. */
 
 function paintAccents() {
   const cur = state.accent || 'blue';
@@ -1434,6 +1499,8 @@ function syncSettingsUI() {
   paintAccents();
   const anb = document.getElementById('autoNightBtn');
   if (anb) paintToggle(anb, document.getElementById('autoNightCircle'), !!state.autoNight);
+  const pnb = document.getElementById('pomoNotifyBtn');
+  if (pnb) paintToggle(pnb, document.getElementById('pomoNotifyCircle'), !!state.pomoNotify);
   const ant = document.getElementById('autoNightTimes');
   if (ant) { ant.classList.toggle('hidden', !state.autoNight); ant.classList.toggle('flex', !!state.autoNight); }
   updateTimeButtons();
@@ -1510,7 +1577,7 @@ function fetchGeoWeather(userInitiated) {
     else fetchLiveWeather(state.weatherLocation || 'Cairo', true);
   });
 
-  // P0-2: Escape closes drawer, modals, suggestions
+  // Global Escape: closes drawer, modals, suggestions
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     suggestionsBox.classList.add('hidden');
@@ -1525,7 +1592,7 @@ function fetchGeoWeather(userInitiated) {
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   });
 
-  // P0-3: ArrowUp/ArrowDown/Enter in search suggestions
+  // Suggestion keyboard nav: ArrowUp/ArrowDown/Enter in search suggestions
   searchInput.addEventListener('keydown', (e) => {
     const items = document.querySelectorAll('.suggestion-item');
     if (suggestionsBox.classList.contains('hidden') || !items.length || gaidridModalOpen()) return;
@@ -1540,6 +1607,7 @@ function fetchGeoWeather(userInitiated) {
     } else if (e.key === 'Enter' && suggActive >= 0) {
       e.preventDefault();
       const el = items[suggActive];
+      if (el.getAttribute && el.getAttribute('data-bang')) { fillBang(el.getAttribute('data-bang')); return; }
       const raw = el.querySelector('span').textContent;
       const act = el.getAttribute('data-act');
       if (act === 'calc') {
@@ -1884,6 +1952,33 @@ function pomoTick() {
   pomoMode = pomoMode === 'focus' ? 'break' : 'focus';
   pomoLeft = pomoMode === 'focus' ? POMO_FOCUS : POMO_BREAK;
   pomoPaint();
+  pomoNotifyDone(pomoMode === 'break' ? 'Focus done — take a break' : 'Break over — back to focus');
+}
+/* Timer-end notification: optional permission, asked once at toggle time. */
+function hasNotifyPerm() {
+  return new Promise((res) => {
+    if (typeof chrome === 'undefined' || !chrome.notifications || !chrome.permissions || !chrome.permissions.contains) { res(true); return; }
+    try { chrome.permissions.contains({ permissions: ['notifications'] }, (g) => res(!!g)); } catch (e) { res(false); }
+  });
+}
+function ensureNotifyPerm() {
+  return hasNotifyPerm().then((g) => {
+    if (g) return true;
+    return new Promise((res) => {
+      if (typeof chrome === 'undefined' || !chrome.permissions || !chrome.permissions.request) { res(true); return; }
+      try { chrome.permissions.request({ permissions: ['notifications'] }, (x) => res(!!x)); } catch (e) { res(false); }
+    });
+  });
+}
+function pomoNotifyDone(msg) {
+  if (!state.pomoNotify) return;
+  try {
+    if (typeof chrome === 'undefined' || !chrome.notifications) return;
+    hasNotifyPerm().then((g) => {
+      if (!g) return;
+      chrome.notifications.create('gaidrid-pomo', { type: 'basic', iconUrl: 'assets/icons/icon128.png', title: 'Gaidrid · Focus timer', message: msg, priority: 1 });
+    });
+  } catch (e) {}
 }
 
 /* ---- Daily quote (local rotation, no network) ---- */
@@ -1994,6 +2089,15 @@ function paintThemeSeg() {
     pomoLeft = pomoMode === 'focus' ? POMO_FOCUS : POMO_BREAK;
     pomoPaint();
   });
+  const pnb = document.getElementById('pomoNotifyBtn');
+  if (pnb) pnb.addEventListener('click', async () => {
+    if (!state.pomoNotify) {
+      if (!(await ensureNotifyPerm())) return;
+    }
+    state.pomoNotify = !state.pomoNotify;
+    syncSettingsUI();
+    if (window.GaidridSave) window.GaidridSave();
+  });
 
   document.addEventListener('keydown', (e) => {
     if (!/^[1-8]$/.test(e.key)) return;
@@ -2057,7 +2161,7 @@ function paintThemeSeg() {
   const HOURS = [];
   for (let h = 0; h < 24; h++) HOURS.push(h);
   const MINUTES = [];
-  for (let m = 0; m < 60; m += 5) MINUTES.push(m);
+  for (let m = 0; m < 60; m++) MINUTES.push(m);
   const itemCls = 'py-1.5 rounded-lg text-xs tabular-nums text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors';
 
   const curTime = () => state[timePickTarget] || (timePickTarget === 'autoNightEnd' ? '07:00' : '22:00');
@@ -2158,22 +2262,14 @@ function collectExport() {
   return {
     app: 'Gaidrid', kind: 'newtab-backup', version: 1,
     exportedAt: new Date().toISOString(),
-    prefs: {
-      use24Hour: state.use24Hour, showSeconds: state.showSeconds, showDate: state.showDate,
-      showGreeting: state.showGreeting, showWeather: state.showWeather, showCondition: state.showCondition,
-      weatherLocation: state.weatherLocation, isCelsius: state.isCelsius,
-      searchEngine: state.searchEngine, searchMode: state.searchMode, apps: state.apps,
-      dark: document.documentElement.classList.contains('dark'),
-      userName: state.userName, useGeolocation: state.useGeolocation,
-      geoLat: state.geoLat, geoLon: state.geoLon, geoAt: state.geoAt,
-      notes: state.notes, history: state.history, showTopSites: state.showTopSites,
-      themeMode: state.themeMode
-    }
+    // ponytail: derive from the live collect() so new prefs can never go stale here
+    prefs: window.GaidridCollect ? window.GaidridCollect() : {}
   };
 }
 function applyImportedPrefs(prefs) {
   const live = { tempC: state.tempC, weatherCode: state.weatherCode, isDay: state.isDay, suggestions: state.suggestions };
   Object.assign(state, prefs, live);
+  migrateSportsFavs();
   if (!state.themeMode && typeof prefs.dark === 'boolean') state.themeMode = prefs.dark ? 'dark' : 'light';
   applyTheme();
   if (state.searchEngine && engineConfig[state.searchEngine]) setSearchEngine(state.searchEngine, true);
@@ -2182,6 +2278,8 @@ function applyImportedPrefs(prefs) {
   syncSettingsUI();
   renderTopSites();
   fetchLiveWeather(state.weatherLocation || 'Cairo');
+  refreshSportsHome();
+  refreshNewsHome();
   if (window.GaidridSave) window.GaidridSave();
 }
 (function gaidridBackup() {
@@ -2433,6 +2531,17 @@ let sportsTab = 'matches';
 let sportsCtl = null;
 let sportsTimer = null;
 
+/* Per-sport card identity: final-whistle wording, team order, and whether
+   events carry a week number (NFL). */
+const SPORTS_CARD = {
+  soccer: { final: 'FT', order: 'home' },
+  basketball: { final: 'Final', order: 'away' },
+  football: { final: 'Final', order: 'away', week: true },
+  baseball: { final: 'Final', order: 'away' },
+  hockey: { final: 'Final', order: 'away' }
+};
+function sportsCard() { return SPORTS_CARD[(sportsLeague() || {}).sport] || SPORTS_CARD.soccer; }
+
 function sportsLeague() {
   return SPORTS_LEAGUES.find((l) => l.key === state.sportsLeague) || SPORTS_LEAGUES[0];
 }
@@ -2451,8 +2560,7 @@ function sportsDayLabel() {
 /* ESPN buckets ?dates= by the US/Eastern calendar day, not the viewer's. One
    local day therefore covers one ET date for US/Eastern users and two for
    everyone else. */
-function sportsESPNDates() {
-  const day = sportsSelectedDate();
+function espnDatesFor(day) {
   const end = new Date(day.getTime());
   end.setDate(end.getDate() + 1);
   const et = (ms) => {
@@ -2464,35 +2572,45 @@ function sportsESPNDates() {
   const b = et(end.getTime() - 1);
   return a === b ? [a] : [a, b];
 }
+function sportsESPNDates() {
+  return espnDatesFor(sportsSelectedDate());
+}
 function sportsOpen() {
   const m = document.getElementById('sportsModal');
   return !!(m && !m.classList.contains('opacity-0'));
 }
-function openSports() {
+function openSports(dayOff) {
   const m = document.getElementById('sportsModal');
   if (m) m.classList.remove('opacity-0', 'pointer-events-none');
-  state.sportsDay = 0;
+  state.sportsDay = (typeof dayOff === 'number') ? Math.max(-7, Math.min(7, dayOff)) : 0;
   fetchSports();
   if (!sportsTimer) sportsTimer = setInterval(() => { if (sportsOpen() && state.sportsAuto !== false && !document.hidden) fetchSports(); }, 60000);
 }
 function closeSports() {
+  const was = sportsOpen();
   const m = document.getElementById('sportsModal');
   if (m) m.classList.add('opacity-0', 'pointer-events-none');
+  if (was) refreshSportsHome();
 }
 function paintSportsTabs() {
   const on = 'flex-1 px-2.5 py-1 rounded-md bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-xs font-semibold';
   const off = 'flex-1 px-2.5 py-1 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white';
-  const a = document.getElementById('sportsTabMatches');
-  const b = document.getElementById('sportsTabTable');
-  if (a) { a.className = sportsTab === 'matches' ? on : off; a.setAttribute('aria-selected', sportsTab === 'matches' ? 'true' : 'false'); }
-  if (b) { b.className = sportsTab === 'table' ? on : off; b.setAttribute('aria-selected', sportsTab === 'table' ? 'true' : 'false'); }
+  const tabs = { matches: 'sportsTabMatches', table: 'sportsTabTable', favs: 'sportsTabFav' };
+  Object.keys(tabs).forEach((k) => {
+    const el = document.getElementById(tabs[k]);
+    if (el) { el.className = sportsTab === k ? on : off; el.setAttribute('aria-selected', sportsTab === k ? 'true' : 'false'); }
+  });
   const day = document.getElementById('sportsDayRow');
   if (day) day.classList.toggle('hidden', sportsTab !== 'matches');
+  const leagues = document.getElementById('sportsLeagues');
+  if (leagues) leagues.classList.toggle('hidden', sportsTab === 'favs');
 }
 function paintSportsLeagues() {
   const box = document.getElementById('sportsLeagues');
   if (!box) return;
-  box.innerHTML = SPORTS_LEAGUES.map((l) => {
+  // Default league first so it never scrolls out of reach.
+  const leagues = SPORTS_LEAGUES.slice().sort((a, b) => (a.key === state.sportsLeague ? -1 : b.key === state.sportsLeague ? 1 : 0));
+  box.innerHTML = leagues.map((l) => {
     const on = l.key === state.sportsLeague;
     return '<button type="button" data-league="' + l.key + '" aria-pressed="' + (on ? 'true' : 'false') + '" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border '
       + (on ? 'bg-[#212832] text-white border-[#212832] dark:bg-white dark:text-[#212832] dark:border-white'
@@ -2518,7 +2636,7 @@ function sportsTeamOf(c, hideScore) {
     record: (c && c.records && c.records[0] && c.records[0].summary) || ''
   };
 }
-function parseSportsMatches(data) {
+function parseSportsMatches(data, sport) {
   const rank = (s) => (s === 'in' ? 0 : s === 'pre' ? 1 : 2);
   return ((data && data.events) || []).map((ev) => {
     const comp = ev.competitions && ev.competitions[0];
@@ -2534,11 +2652,27 @@ function parseSportsMatches(data) {
       date: ev.date,
       state: mstate,
       detail: tp.shortDetail || tp.detail || '',
+      context: sportsEventContext(ev, comp, sport),
       url: (links[0] && (links[0].href || (links[0].web && links[0].web.href))) || '',
       home: sportsTeamOf(home, mstate === 'pre'),
       away: sportsTeamOf(away, mstate === 'pre')
     };
   }).sort((a, b) => rank(a.state) - rank(b.state));
+}
+/* Round / week context shown under the status: competition note (soccer cups)
+   or the week number (NFL). Anything missing stays hidden — never invented. */
+function sportsEventContext(ev, comp, sport) {
+  try {
+    if (comp && Array.isArray(comp.notes) && comp.notes[0]) {
+      const n = comp.notes[0].headline || comp.notes[0].text || comp.notes[0];
+      if (typeof n === 'string' && n.trim()) return n.trim();
+    }
+    const sp = sport || (sportsLeague() || {}).sport;
+    if (sp === 'football' && ev && ev.week && ev.week.number) {
+      return 'Week ' + ev.week.number;
+    }
+  } catch (e) {}
+  return '';
 }
 function sportsLocalWhen(m) {
   if (!m.date) return m.detail || '';
@@ -2554,8 +2688,19 @@ function sportsStatusHTML(m) {
   if (m.state === 'in') {
     return '<span class="flex items-center gap-1.5 text-[11px] font-bold text-red-500"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>' + escHtml(m.detail || 'LIVE') + '</span>';
   }
+  const finalWord = sportsCard().final || 'Final';
   if (m.state === 'post') {
-    return '<span class="text-[11px] font-semibold text-gray-400">FT' + (m.detail && m.detail !== 'Final' ? ' · ' + escHtml(m.detail) : '') + '</span>';
+    const d = m.detail || '';
+    // Postponed/cancelled games are not results — show the status, not a score style.
+    if (/postponed|cancelled|canceled|suspended|delayed/i.test(d)) {
+      return '<span class="text-[11px] font-semibold text-gray-400">' + escHtml(d) + '</span>';
+    }
+    // ESPN often repeats the whistle word inside the detail ("FT", "Final/OT").
+    let label;
+    if (!d || d === finalWord || d === 'Full Time') label = finalWord;
+    else if (d.indexOf(finalWord) === 0) label = d;
+    else label = finalWord + ' · ' + d;
+    return '<span class="text-[11px] font-semibold text-gray-400">' + escHtml(label) + '</span>';
   }
   return '<span class="text-[11px] font-medium text-gray-400">' + escHtml(sportsLocalWhen(m)) + '</span>';
 }
@@ -2571,8 +2716,7 @@ function sportsTeamRow(t, opp, decided) {
   } else if (t.record) {
     right = '<span class="block text-[11px] tabular-nums text-gray-400">' + escHtml(t.record) + '</span>';
   }
-  const fav = currentSportsFav();
-  const onFav = !!(fav.id && t.id && String(fav.id) === String(t.id));
+  const onFav = isFavTeam(t.id);
   const nameCls = win
     ? 'font-bold text-gray-900 dark:text-white'
     : (onFav ? 'font-semibold text-amber-600 dark:text-amber-400' : 'font-medium text-gray-600 dark:text-gray-300');
@@ -2583,16 +2727,16 @@ function sportsTeamRow(t, opp, decided) {
 }
 function sportsMatchHTML(m) {
   const decided = m.state === 'post';
-  const homeFirst = sportsLeague().sport === 'soccer';
-  const first = homeFirst ? m.home : m.away;
-  const second = homeFirst ? m.away : m.home;
+  const card = sportsCard();
+  const first = card.order === 'home' ? m.home : m.away;
+  const second = card.order === 'home' ? m.away : m.home;
   const cls = 'px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-white/[0.04] hover:bg-gray-100 dark:hover:bg-white/[0.08] transition-colors ' + (decided ? 'opacity-75 ' : '');
   const open = m.url
     ? '<a href="' + escHtml(m.url) + '" target="_blank" rel="noopener" class="block ' + cls + '">'
     : '<div class="' + cls + '">';
   const close = m.url ? '</a>' : '</div>';
   return open
-    + '<div class="mb-1.5">' + sportsStatusHTML(m) + '</div>'
+    + '<div class="mb-1.5 flex items-center gap-2 min-w-0">' + sportsStatusHTML(m) + (m.context ? '<span class="text-[10px] text-gray-400 truncate">' + escHtml(m.context) + '</span>' : '') + '</div>'
     + sportsTeamRow(first, second.score, decided)
     + '<div class="mt-1.5">' + sportsTeamRow(second, first.score, decided) + '</div>' + close;
 }
@@ -2600,10 +2744,10 @@ function renderSportsMatches(list) {
   const box = document.getElementById('sportsBody');
   if (!box) return;
   const lg = sportsLeague();
-  const favId = currentSportsFav().id;
+  const favIds = new Set(sportsFavList().map((t) => String(t.id)));
   const sorted = list.slice().sort((a, b) => {
-    const fa = favId && ((a.home.id || '') === favId || (a.away.id || '') === favId) ? 0 : 1;
-    const fb = favId && ((b.home.id || '') === favId || (b.away.id || '') === favId) ? 0 : 1;
+    const fa = favIds.size && (favIds.has(a.home.id || '') || favIds.has(a.away.id || '')) ? 0 : 1;
+    const fb = favIds.size && (favIds.has(b.home.id || '') || favIds.has(b.away.id || '')) ? 0 : 1;
     return fa - fb;
   });
   const visible = state.sportsShowFinished === false ? sorted.filter((m) => m.state !== 'post') : sorted;
@@ -2642,6 +2786,7 @@ function repaintSports() {
   const box = document.getElementById('sportsBody');
   const top = box ? box.scrollTop : 0;
   if (sportsLastRender.kind === 'matches') renderSportsMatches(sportsLastRender.list);
+  else if (sportsLastRender.kind === 'favs') renderFavTab();
   else renderSportsTable(sportsLastRender.groups, sportsLastRender.cols);
   if (box) box.scrollTop = top;
 }
@@ -2649,9 +2794,21 @@ async function fetchSports() {
   paintSportsTabs();
   paintSportsLeagues();
   paintSportsDay();
+  const title = document.getElementById('sportsTitle');
+  if (title) title.textContent = sportsTab === 'favs' ? 'Favorite Teams' : ((sportsLeague() || {}).full || 'Sports');
   const box = document.getElementById('sportsBody');
   const up = document.getElementById('sportsUpdated');
   const key = sportsKeyStr();
+  if (sportsTab === 'favs') {
+    sportsRenderKey = key;
+    sportsLastRender = { key, kind: 'favs' };
+    if (box) box.scrollTop = 0;
+    renderFavTab();
+    if (up) up.textContent = '';
+    const ric = document.querySelector('#sportsRefreshBtn i');
+    if (ric) ric.classList.remove('animate-spin');
+    return;
+  }
   const sameKey = key === sportsRenderKey && !!box && box.childElementCount > 0;
   const top = sameKey ? box.scrollTop : 0;
   sportsRenderKey = key;
@@ -2713,8 +2870,10 @@ async function fetchSports() {
   if (r) r.addEventListener('click', fetchSports);
   const tm = document.getElementById('sportsTabMatches');
   const tt = document.getElementById('sportsTabTable');
+  const tf = document.getElementById('sportsTabFav');
   if (tm) tm.addEventListener('click', () => { sportsTab = 'matches'; fetchSports(); });
   if (tt) tt.addEventListener('click', () => { sportsTab = 'table'; fetchSports(); });
+  if (tf) tf.addEventListener('click', () => { sportsTab = 'favs'; fetchSports(); });
   const pv = document.getElementById('sportsPrevDay');
   const nx = document.getElementById('sportsNextDay');
   if (pv) pv.addEventListener('click', () => {
@@ -2726,6 +2885,107 @@ async function fetchSports() {
     fetchSports();
   });
 })();
+
+/* ---- Home extras: live badge + favorite next-match chip ----
+   One quiet background fetch per league that has a favorite team
+   (today + tomorrow). Silent on failure; skipped offline. */
+let sportsHomeCtl = null;
+let sportsHomeTimer = null;
+/* Live matches involving favorite teams — ids may be one id or an array. */
+function favLiveCount(list, favIds) {
+  const set = new Set((Array.isArray(favIds) ? favIds : [favIds]).filter((x) => x !== undefined && x !== null && x !== '').map(String));
+  if (!set.size) return 0;
+  return (list || []).filter((m) => m && m.state === 'in'
+    && (set.has(String((m.home || {}).id || '')) || set.has(String((m.away || {}).id || '')))).length;
+}
+/* Next upcoming match of favorite team(s) — pure, tested in logic-check. */
+function nextFavMatch(list, favIds, now) {
+  const set = new Set((Array.isArray(favIds) ? favIds : [favIds]).filter((x) => x !== undefined && x !== null && x !== '').map(String));
+  if (!set.size) return null;
+  const t = (typeof now === 'number') ? now : Date.now();
+  const mine = (list || []).filter((m) => m && m.state === 'pre'
+    && (set.has(String((m.home || {}).id || '')) || set.has(String((m.away || {}).id || '')))
+    && m.date && new Date(m.date).getTime() >= t - 7200000);
+  mine.sort((a, b) => new Date(a.date) - new Date(b.date));
+  return mine[0] || null;
+}
+async function refreshSportsHome() {
+  const badge = document.getElementById('sportsLiveBadge');
+  const chip = document.getElementById('favMatchChip');
+  const hideBadge = () => { if (badge) { badge.classList.add('hidden'); badge.classList.remove('flex'); } };
+  const hideChip = () => { if (chip) { chip.classList.add('hidden'); chip.classList.remove('flex'); chip.onclick = null; } };
+  try {
+    if (!navigator.onLine) throw 0;
+    const favMap = {};
+    SPORTS_LEAGUES.forEach((l) => {
+      const arr = ((state.sportsFav || {})[l.key] || []).filter((t) => t && t.id);
+      if (arr.length) favMap[l.key] = arr;
+    });
+    const favKeys = Object.keys(favMap);
+    if (!favKeys.length) { hideBadge(); hideChip(); return; }
+    if (sportsHomeCtl) sportsHomeCtl.abort();
+    sportsHomeCtl = new AbortController();
+    const signal = sportsHomeCtl.signal;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today.getTime()); tomorrow.setDate(tomorrow.getDate() + 1);
+    const dates = Array.from(new Set(espnDatesFor(today).concat(espnDatesFor(tomorrow))));
+    const perLeague = await Promise.all(favKeys.map(async (key) => {
+      const lg = SPORTS_LEAGUES.find((l) => l.key === key);
+      const base = 'https://site.api.espn.com/apis/site/v2/sports/' + lg.sport + '/' + lg.league;
+      const payloads = await Promise.all(dates.map((d) =>
+        fetch(base + '/scoreboard?dates=' + d, { signal })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch((e) => { if (e && e.name === 'AbortError') throw e; return null; })));
+      const seen = {};
+      const events = [];
+      payloads.forEach((p) => {
+        if (p && Array.isArray(p.events)) p.events.forEach((ev) => {
+          if (ev && ev.id && !seen[ev.id]) { seen[ev.id] = true; events.push(ev); }
+        });
+      });
+      return { key, list: parseSportsMatches({ events }, lg.sport) };
+    }));
+    let live = 0;
+    let best = null;
+    perLeague.forEach(({ key, list }) => {
+      const ids = favMap[key].map((t) => t.id);
+      live += favLiveCount(list, ids);
+      const nxt = nextFavMatch(list, ids);
+      if (nxt && (!best || new Date(nxt.date) < new Date(best.m.date))) {
+        const fav = favMap[key].find((t) => String(t.id) === String((nxt.home || {}).id || '') || String(t.id) === String((nxt.away || {}).id || '')) || favMap[key][0];
+        best = { key, m: nxt, fav };
+      }
+    });
+    if (badge) {
+      badge.textContent = live > 9 ? '9+' : String(live);
+      badge.classList.toggle('hidden', !live);
+      badge.classList.toggle('flex', !!live);
+    }
+    if (chip) {
+      if (best) {
+        const isHome = String((best.m.home || {}).id || '') === String(best.fav.id);
+        const opp = isHome ? best.m.away.name : best.m.home.name;
+        const d = new Date(best.m.date);
+        const chipDay = d.toDateString() === today.toDateString() ? 0 : 1;
+        const t = d.toLocaleString('en-US', state.use24Hour ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', minute: '2-digit' });
+        const label = document.getElementById('favMatchLabel');
+        if (label) label.textContent = best.fav.name + (isHome ? ' vs ' : ' at ') + opp + ' · ' + (chipDay === 0 ? 'Today ' : 'Tomorrow ') + t;
+        chip.classList.remove('hidden');
+        chip.classList.add('flex');
+        chip.onclick = () => { state.sportsLeague = best.key; openSports(chipDay); };
+      } else hideChip();
+    }
+  } catch (e) {
+    hideBadge();
+    hideChip();
+  }
+}
+if (!sportsHomeTimer) {
+  // ponytail: no call here — state.sportsFav loads async below; the restore,
+  // import, modal-close and fav-change paths trigger the first fetch instead.
+  // 5-minute poll, skipped while hidden or while the modal owns the data
+  sportsHomeTimer = setInterval(() => { if (!document.hidden && !sportsOpen()) refreshSportsHome(); }, 300000);
+}
 
 /* ---- News / RSS: optional host permission, feeds, reading mode ---- */
 const NEWS_ORIGINS = ['https://*/*', 'http://*/*'];
@@ -2757,11 +3017,21 @@ function showNewsList() {
   const back = document.getElementById('newsBackBtn');
   const refresh = document.getElementById('newsRefreshBtn');
   const foot = document.getElementById('newsArticleFoot');
+  const fd = document.getElementById('newsFontDec');
+  const fi = document.getElementById('newsFontInc');
+  const pw = document.getElementById('newsProgressWrap');
+  const sw = document.getElementById('newsSearchWrap');
+  const fw = document.getElementById('newsFilters');
   if (list) list.classList.remove('hidden');
   if (art) art.classList.add('hidden');
   if (back) back.classList.add('hidden');
   if (refresh) refresh.classList.remove('hidden');
   if (foot) foot.classList.add('hidden');
+  if (fd) { fd.classList.add('hidden'); fd.classList.remove('flex'); }
+  if (fi) { fi.classList.add('hidden'); fi.classList.remove('flex'); }
+  if (pw) pw.classList.add('hidden');
+  if (sw) sw.classList.remove('hidden');
+  if (fw) fw.classList.remove('hidden');
 }
 function openNews() {
   const m = document.getElementById('newsModal');
@@ -2770,8 +3040,40 @@ function openNews() {
   if (!newsTimer) newsTimer = setInterval(() => { if (newsOpen() && newsView === 'list' && state.newsAuto !== false && !document.hidden) fetchNews(); }, 60000);
 }
 function closeNews() {
+  const was = newsOpen();
   const m = document.getElementById('newsModal');
   if (m) m.classList.add('opacity-0', 'pointer-events-none');
+  if (was) refreshNewsHome();
+}
+/* ---- News home extra: unread badge (same idea as the sports live badge) ----
+   Quiet background fetch of every feed; silent on failure or without access. */
+let newsHomeCtl = null;
+let newsHomeTimer = null;
+async function refreshNewsHome() {
+  const badge = document.getElementById('newsLiveBadge');
+  try {
+    if (!navigator.onLine) throw 0;
+    if (!state.newsFeeds.length) throw 0;
+    if (!(await hasNewsPerm())) throw 0;
+    if (newsHomeCtl) newsHomeCtl.abort();
+    newsHomeCtl = new AbortController();
+    const data = await loadNewsItems(newsHomeCtl.signal);
+    if (!data) return;
+    const n = countNewsUnread(data.items, state.newsRead);
+    if (badge) {
+      badge.textContent = n > 9 ? '9+' : String(n);
+      badge.classList.toggle('hidden', !n);
+      badge.classList.toggle('flex', !!n);
+    }
+  } catch (e) {
+    if (badge) { badge.classList.add('hidden'); badge.classList.remove('flex'); }
+  }
+}
+if (!newsHomeTimer) {
+  // ponytail: no call here — feeds/read state loads async below; the restore,
+  // import, modal-close and settings paths trigger the first fetch instead.
+  // 5-minute poll, skipped while hidden or while the modal owns the data
+  newsHomeTimer = setInterval(() => { if (!document.hidden && !newsOpen()) refreshNewsHome(); }, 300000);
 }
 function feedItemImg(n, baseUrl) {
   const pick = (el) => (el && (el.getAttribute('url') || el.getAttribute('href') || '')) || '';
@@ -2812,13 +3114,63 @@ function parseFeed(xmlText, sourceName, feedUrl) {
   const txt = (n, sel) => { const e = n.querySelector(sel); return e ? (e.textContent || '').trim() : ''; };
   return nodes.map((n) => {
     const linkEl = n.querySelector('link');
-    const link = linkEl ? ((linkEl.getAttribute('href') || linkEl.textContent || '').trim()) : '';
+    const rawLink = linkEl ? ((linkEl.getAttribute('href') || linkEl.textContent || '').trim()) : '';
     const dateTxt = txt(n, 'pubDate') || txt(n, 'published') || txt(n, 'updated');
     const ts = dateTxt ? Date.parse(dateTxt) : 0;
-    return { title: txt(n, 'title') || '(untitled)', link: link, ts: ts || 0, source: sourceName, img: feedItemImg(n, feedUrl) };
-  }).filter((it) => it.link && /^https?:/i.test(it.link));
+    return { title: txt(n, 'title') || '(untitled)', link: resolveNewsLink(rawLink, feedUrl), feed: feedUrl, ts: ts || 0, source: sourceName, img: feedItemImg(n, feedUrl) };
+  }).filter((it) => !!it.link);
 }
 function newsFeedName(f) { return f.name || (f.url || '').replace(/^https?:\/\//, '').split('/')[0]; }
+/* Fetch + parse every feed, newest first — shared by the window and the badge. */
+async function loadNewsItems(signal) {
+  const results = await Promise.allSettled(state.newsFeeds.map(async (f) => {
+    const res = await fetch(f.url, { signal });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return parseFeed(await res.text(), newsFeedName(f), f.url);
+  }));
+  if (signal && signal.aborted) return null;
+  const items = [];
+  const failed = [];
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') items.push(...r.value);
+    else if (!(r.reason && r.reason.name === 'AbortError')) failed.push(newsFeedName(state.newsFeeds[i]));
+  });
+  items.sort((a, b) => b.ts - a.ts);
+  return { items, failed };
+}
+/* Unread count — pure, tested in logic-check. */
+function countNewsUnread(items, read) {
+  const seen = new Set(read || []);
+  return (items || []).filter((it) => it && it.link && !seen.has(it.link)).length;
+}
+/* Resolve a feed item link (absolute or relative) — pure, tested in logic-check. */
+function resolveNewsLink(link, feedUrl) {
+  const l = String(link || '').trim();
+  if (!l) return '';
+  try {
+    const u = new URL(l, feedUrl);
+    return /^https?:/i.test(u.href) ? u.href : '';
+  } catch (e) { return ''; }
+}
+/* Estimated minutes to read a text — pure, tested in logic-check. */
+function newsReadMins(text) {
+  const words = String(text || '').trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
+/* Filter visible news by a free-text query — pure, tested in logic-check. */
+function filterNewsItems(items, q) {
+  const needle = String(q || '').trim().toLowerCase();
+  if (!needle) return (items || []).slice();
+  return (items || []).filter((it) => ((it.title || '') + ' ' + (it.source || '')).toLowerCase().indexOf(needle) !== -1);
+}
+function isNewsRead(link) {
+  return (state.newsRead || []).indexOf(link) !== -1;
+}
+function markNewsRead(link) {
+  if (!link || isNewsRead(link)) return;
+  state.newsRead = (state.newsRead || []).concat([link]).slice(-300);
+  if (window.GaidridSave) window.GaidridSave();
+}
 async function fetchNews() {
   const box = document.getElementById('newsList');
   if (!box) return;
@@ -2830,25 +3182,17 @@ async function fetchNews() {
     return;
   }
   if (!state.newsFeeds.length) {
-    box.innerHTML = '<div class="py-6 text-center text-sm text-gray-400">No feeds yet — add one in Settings</div>';
+    box.innerHTML = '<div class="py-6 text-center text-sm text-gray-400">No feeds yet — add one in settings</div>';
     return;
   }
   box.innerHTML = '<div class="flex items-center justify-center gap-2 py-6 text-xs text-gray-400"><i class="fa-solid fa-circle-notch animate-spin"></i>Loading feeds&hellip;</div>';
   if (newsCtl) newsCtl.abort();
   newsCtl = new AbortController();
   const signal = newsCtl.signal;
-  const results = await Promise.allSettled(state.newsFeeds.map(async (f) => {
-    const res = await fetch(f.url, { signal });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return parseFeed(await res.text(), newsFeedName(f), f.url);
-  }));
-  if (signal.aborted) return;
-  const items = [];
-  const failed = [];
-  results.forEach((r, i) => {
-    if (r.status === 'fulfilled') items.push(...r.value);
-    else if (!(r.reason && r.reason.name === 'AbortError')) failed.push(newsFeedName(state.newsFeeds[i]));
-  });
+  const data = await loadNewsItems(signal);
+  if (!data) return;
+  const items = data.items;
+  const failed = data.failed;
   if (!items.length && failed.length) {
     box.innerHTML = '<div class="py-6 text-center"><p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Couldn\'t load feeds: ' + escHtml(failed.join(', ')) + '</p>'
       + '<button type="button" id="newsRetryBtn" class="mt-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/[0.06] text-xs font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 transition-all">Retry</button></div>';
@@ -2857,21 +3201,62 @@ async function fetchNews() {
     return;
   }
   items.sort((a, b) => b.ts - a.ts);
-  newsItems = items;
-  let warn = '';
-  if (failed.length) warn = '<div class="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-700 dark:text-amber-300">Couldn\'t load: ' + escHtml(failed.join(', ')) + '</div>';
-  box.innerHTML = warn + items.map((it, i) => {
+  newsAll = items;
+  newsWarn = failed.length ? '<div class="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-700 dark:text-amber-300">Couldn\'t load: ' + escHtml(failed.join(', ')) + '</div>' : '';
+  renderNewsList();
+}
+function wireNewsImgs(box) {
+  box.querySelectorAll('img').forEach((img) => {
+    const hide = () => img.classList.add('invisible');
+    if (img.complete && img.naturalWidth === 0) hide();
+    else img.addEventListener('error', hide);
+  });
+}
+let newsAll = [];
+let newsWarn = '';
+function paintNewsFilters() {
+  const wrap = document.getElementById('newsFilters');
+  if (wrap) {
+    const feeds = state.newsFeeds || [];
+    wrap.classList.toggle('hidden', !feeds.length);
+    const cur = state.newsFilter || 'all';
+    const btn = (key, label) => '<button type="button" data-newsfilter="' + escHtml(key) + '" class="px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all '
+      + (cur === key ? 'bg-[#212832] text-white dark:bg-white dark:text-[#212832]' : 'bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10') + '">'
+      + escHtml(label) + '</button>';
+    wrap.innerHTML = btn('all', 'All') + feeds.map((f) => btn(f.url, newsFeedName(f))).join('');
+  }
+  const mr = document.getElementById('newsMarkRead');
+  if (mr) mr.classList.toggle('hidden', !newsAll.some((it) => !isNewsRead(it.link)));
+}
+function renderNewsList() {
+  const box = document.getElementById('newsList');
+  if (!box) return;
+  paintNewsFilters();
+  const q = (document.getElementById('newsSearchInput') || {}).value || '';
+  const cur = state.newsFilter || 'all';
+  const pool = cur === 'all' ? newsAll : newsAll.filter((it) => it.feed === cur);
+  newsItems = filterNewsItems(pool, q);
+  const s = document.getElementById('newsSearchWrap');
+  if (s) s.classList.toggle('hidden', !newsAll.length && !q);
+  if (!newsItems.length) {
+    box.innerHTML = newsWarn + '<div class="py-6 text-center text-sm text-gray-400">' + (newsAll.length ? 'No stories match' : 'No stories') + '</div>';
+    return;
+  }
+  box.innerHTML = newsWarn + newsItems.map((it, i) => {
     const d = it.ts ? new Date(it.ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
     return '<button type="button" data-news-idx="' + i + '" class="w-full text-left px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-white/[0.06] border border-gray-100 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 transition-all">'
       + '<div class="flex gap-3 items-start">'
       + '<div class="min-w-0 flex-1">'
-      + '<div class="flex items-center gap-2 mb-0.5"><span class="text-[10px] font-bold uppercase tracking-wider text-google-blue truncate">' + escHtml(it.source) + '</span>'
+      + '<div class="flex items-center gap-2 mb-0.5">'
+      + (!isNewsRead(it.link) ? '<span class="news-unread w-1.5 h-1.5 rounded-full bg-google-blue shrink-0"></span>' : '')
+      + '<span class="text-[10px] font-bold uppercase tracking-wider text-google-blue truncate">' + escHtml(it.source) + '</span>'
       + '<span class="text-[10px] text-gray-400 ml-auto shrink-0">' + escHtml(d) + '</span></div>'
       + '<div class="text-sm font-medium text-gray-800 dark:text-gray-100 leading-snug">' + escHtml(it.title) + '</div>'
       + '</div>'
       + (it.img ? '<img src="' + escHtml(it.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer" class="w-14 h-14 rounded-lg object-cover shrink-0 bg-gray-100 dark:bg-white/10">' : '')
       + '</div></button>';
   }).join('');
+  wireNewsImgs(box);
 }
 function sanitizeArticle(html, baseUrl) {
   const box = document.createElement('div');
@@ -2950,9 +3335,29 @@ async function openArticle(idx) {
     content = '<div class="py-4 text-center"><p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Couldn\'t load this article in reading mode.</p>'
       + '<p class="text-xs text-gray-400">Use "Open in new tab" to read it on the source site.</p></div>';
   }
-  art.innerHTML = '<div class="text-[10px] font-bold uppercase tracking-wider text-google-blue mb-1">' + escHtml(item.source) + '</div>'
+  const mins = newsReadMins(title + ' ' + String(content).replace(/<[^>]+>/g, ' '));
+  art.innerHTML = '<div class="text-[10px] font-bold uppercase tracking-wider text-google-blue mb-1">' + escHtml(item.source) + (mins ? ' · ~' + mins + ' min read' : '') + '</div>'
     + '<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3 leading-snug">' + escHtml(title) + '</h2>'
     + '<div class="article-body text-sm text-gray-700 dark:text-gray-300 leading-relaxed">' + content + '</div>';
+  applyNewsFont();
+  const bar = document.getElementById('newsProgress');
+  if (bar) bar.style.width = '0%';
+  art.scrollTop = 0;
+  const fd = document.getElementById('newsFontDec');
+  const fi = document.getElementById('newsFontInc');
+  const pw = document.getElementById('newsProgressWrap');
+  const sw = document.getElementById('newsSearchWrap');
+  const fw = document.getElementById('newsFilters');
+  if (fd) { fd.classList.remove('hidden'); fd.classList.add('flex'); }
+  if (fi) { fi.classList.remove('hidden'); fi.classList.add('flex'); }
+  if (pw) pw.classList.remove('hidden');
+  if (sw) sw.classList.add('hidden');
+  if (fw) fw.classList.add('hidden');
+}
+function applyNewsFont() {
+  const art = document.getElementById('newsArticle');
+  const bd = art ? art.querySelector('.article-body') : null;
+  if (bd) bd.style.fontSize = (14 + (state.newsFontStep || 0)) + 'px';
 }
 (function gaidridNews() {
   const btn = document.getElementById('newsBtn');
@@ -2967,7 +3372,50 @@ async function openArticle(idx) {
   if (list) list.addEventListener('click', (e) => {
     const btn2 = e.target && e.target.closest ? e.target.closest('[data-news-idx]') : null;
     if (!btn2 || !list.contains(btn2)) return;
-    openArticle(parseInt(btn2.getAttribute('data-news-idx'), 10));
+    const idx = parseInt(btn2.getAttribute('data-news-idx'), 10);
+    const item = newsItems[idx];
+    if (item && item.link && !isNewsRead(item.link)) {
+      markNewsRead(item.link);
+      const dot = btn2.querySelector('.news-unread');
+      if (dot) dot.remove();
+      paintNewsFilters();
+    }
+    openArticle(idx);
+  });
+  const filt = document.getElementById('newsFilters');
+  if (filt) filt.addEventListener('click', (e) => {
+    const b = e.target && e.target.closest ? e.target.closest('[data-newsfilter]') : null;
+    if (!b || !filt.contains(b)) return;
+    state.newsFilter = b.getAttribute('data-newsfilter') || 'all';
+    if (window.GaidridSave) window.GaidridSave();
+    renderNewsList();
+  });
+  const si = document.getElementById('newsSearchInput');
+  if (si) si.addEventListener('input', renderNewsList);
+  const mr = document.getElementById('newsMarkRead');
+  if (mr) mr.addEventListener('click', () => {
+    const links = newsAll.map((it) => it.link).filter(Boolean);
+    state.newsRead = Array.from(new Set((state.newsRead || []).concat(links))).slice(-300);
+    if (window.GaidridSave) window.GaidridSave();
+    renderNewsList();
+    const badge = document.getElementById('newsLiveBadge');
+    if (badge) { badge.classList.add('hidden'); badge.classList.remove('flex'); }
+  });
+  const stepFont = (d) => {
+    state.newsFontStep = Math.max(-2, Math.min(2, (state.newsFontStep || 0) + d));
+    if (window.GaidridSave) window.GaidridSave();
+    applyNewsFont();
+  };
+  const fd = document.getElementById('newsFontDec');
+  const fi = document.getElementById('newsFontInc');
+  if (fd) fd.addEventListener('click', () => stepFont(-1));
+  if (fi) fi.addEventListener('click', () => stepFont(1));
+  const art = document.getElementById('newsArticle');
+  if (art) art.addEventListener('scroll', () => {
+    const bar = document.getElementById('newsProgress');
+    if (!bar) return;
+    const max = art.scrollHeight - art.clientHeight;
+    bar.style.width = (max > 0 ? Math.min(100, (art.scrollTop / max) * 100) : 0) + '%';
   });
 })();
 
@@ -2993,7 +3441,8 @@ function sportsRowCells(sm) {
     w: sm.wins || '–',
     d: sm.draws || sm.ties || '–',
     l: sm.losses || '–',
-    pts: sm.points || sm.pts || '–'
+    pts: sm.points || sm.pts || '–',
+    gd: sm.pointdifferential || '–'
   };
 }
 function sportsRecordURL(tableURL, teamRef) {
@@ -3071,7 +3520,7 @@ async function fetchSportsTableData(lg, signal) {
       }
     }
     const cells = sportsRowCells(sm);
-    return { tid: tid || '', name: meta.name, logo: meta.logo, p: cells.p, w: cells.w, d: cells.d, l: cells.l, pts: cells.pts, has: Object.keys(sm).length > 0 };
+    return { tid: tid || '', name: meta.name, logo: meta.logo, p: cells.p, w: cells.w, d: cells.d, l: cells.l, gd: cells.gd, pts: cells.pts, has: Object.keys(sm).length > 0 };
   });
   const built = await Promise.all(jobs);
   sportsTableCache[key] = cached;
@@ -3081,7 +3530,7 @@ async function fetchSportsTableData(lg, signal) {
 
 /* ---- Standings columns per sport (points only meaningful in soccer) ---- */
 const SPORTS_COLS = {
-  soccer: [['P', 'p'], ['W', 'w'], ['D', 'd'], ['L', 'l'], ['Pts', 'pts']],
+  soccer: [['P', 'p'], ['W', 'w'], ['D', 'd'], ['L', 'l'], ['GD', 'gd'], ['Pts', 'pts']],
   basketball: [['GP', 'p'], ['W', 'w'], ['L', 'l']],
   football: [['W', 'w'], ['L', 'l'], ['T', 'd']],
   baseball: [['P', 'p'], ['W', 'w'], ['L', 'l']],
@@ -3093,13 +3542,13 @@ function renderSportsTable(groups, cols) {
   cols = cols || [['P', 'p'], ['W', 'w'], ['D', 'd'], ['L', 'l'], ['Pts', 'pts']];
   if (!groups.length) {
     const lg = sportsLeague();
-    box.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">No standings for ' + escHtml(lg.full) + ' yet</div>';
+    box.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">No standings for ' + escHtml(lg.full) + ' yet<br><span class="text-[11px]">Use the refresh button to try again</span></div>';
     return;
   }
   const tpl = '1fr repeat(' + cols.length + ',28px)';
   box.innerHTML = groups.map((g) => {
     const head = '<div class="grid sticky top-0 z-10 items-center gap-1 px-3.5 pt-1 pb-0.5 bg-white dark:bg-[#232c38] text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1" style="grid-template-columns:' + tpl + '">'
-      + '<span>' + escHtml(g.name || 'Table') + '</span>'
+      + '<span>' + escHtml(g.name || (sportsLeague() || {}).full || 'Table') + '</span>'
       + cols.map((c) => '<span class="text-center">' + c[0] + '</span>').join('') + '</div>';
     const rows = g.rows.map((r, i) => {
       const cells = cols.map((c) => '<span class="text-center tabular-nums text-sm ' + (c[0] === 'Pts' ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300') + '">' + escHtml(r[c[1]]) + '</span>').join('');
@@ -3115,23 +3564,42 @@ function renderSportsTable(groups, cols) {
   wireSportsLogos(box);
 }
 
-/* ---- Sports favorites + Sports settings ---- */
-function currentSportsFav() {
+/* ---- Sports favorites (multiple teams per league) + Sports settings ---- */
+// Old saves stored one team object (or null) per league; normalize to arrays.
+function migrateSportsFavs() {
+  state.sportsFav = state.sportsFav || {};
+  Object.keys(state.sportsFav).forEach((k) => {
+    const v = state.sportsFav[k];
+    if (!v) state.sportsFav[k] = [];
+    else if (Array.isArray(v)) state.sportsFav[k] = v.filter((t) => t && t.id).map((t) => ({ id: String(t.id), name: t.name || '', logo: t.logo || '' }));
+    else if (v.id) state.sportsFav[k] = [{ id: String(v.id), name: v.name || '', logo: v.logo || '' }];
+    else state.sportsFav[k] = [];
+  });
+}
+function sportsFavList() {
   const lg = sportsLeague() || {};
-  return ((state.sportsFav || {})[lg.key]) || {};
+  const v = (state.sportsFav || {})[lg.key];
+  return Array.isArray(v) ? v : [];
+}
+function isFavTeam(id) {
+  if (!id) return false;
+  return sportsFavList().some((t) => String(t.id) === String(id));
 }
 function setSportsFav(id, name, logo) {
   if (!id) return;
   const lg = sportsLeague() || {};
   if (!lg.key) return;
   state.sportsFav = state.sportsFav || {};
-  const cur = state.sportsFav[lg.key] || {};
-  state.sportsFav[lg.key] = (cur.id && String(cur.id) === String(id)) ? null : { id: String(id), name: name || '', logo: logo || '' };
+  const arr = sportsFavList().slice();
+  const i = arr.findIndex((t) => String(t.id) === String(id));
+  if (i >= 0) arr.splice(i, 1);
+  else arr.push({ id: String(id), name: name || '', logo: logo || '' });
+  state.sportsFav[lg.key] = arr;
   repaintSports();
+  refreshSportsHome();
 }
 function sportsFavBtnHTML(t) {
-  const fav = currentSportsFav();
-  const on = fav.id && t.id && String(t.id) === String(fav.id);
+  const on = isFavTeam(t.id);
   return '<button type="button" data-favteam="' + escHtml(t.id || '') + '" data-favname="' + escHtml(t.name) + '" data-favlogo="' + escHtml(t.logo) + '" aria-pressed="' + (on ? 'true' : 'false') + '" aria-label="Favorite ' + escHtml(t.name) + '" class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all ' + (on ? 'text-amber-400' : 'text-gray-300 dark:text-gray-600 hover:text-amber-400') + '" title="Favorite team"><i class="fa-solid fa-star text-[10px]"></i></button>';
 }
 function paintSportsSettings() {
@@ -3155,6 +3623,59 @@ function paintSportsSettings() {
     setSportsFav(b.getAttribute('data-favteam'), b.getAttribute('data-favname'), b.getAttribute('data-favlogo'));
   });
 })();
+
+/* ---- Favorite teams tab (inside the Sports window, no dropdown) ---- */
+function renderFavTab() {
+  const box = document.getElementById('sportsBody');
+  if (!box) return;
+  const groups = SPORTS_LEAGUES.map((l) => ({
+    lg: l,
+    teams: ((state.sportsFav || {})[l.key] || []).filter((t) => t && t.id)
+  })).filter((g) => g.teams.length);
+  if (!groups.length) {
+    box.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">No starred teams yet<br><span class="text-[11px]">Tap the star on any team to keep it here</span><br><button type="button" data-favbrowse="1" class="inline-block mt-3 px-4 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-all">Browse matches</button></div>';
+    return;
+  }
+  box.innerHTML = groups.map((g) =>
+    '<div class="px-1 pt-2 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">' + escHtml(g.lg.full) + '</div>'
+    + g.teams.map((t) =>
+      '<div class="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-white/[0.04] hover:bg-gray-100 dark:hover:bg-white/[0.08] cursor-pointer transition-colors" data-favopen="' + g.lg.key + '">'
+      + (t.logo ? '<img src="' + escHtml(t.logo) + '" alt="" class="w-6 h-6 object-contain shrink-0">' : '<span class="w-6 h-6 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-[10px] font-bold text-gray-400 shrink-0">' + escHtml((t.name || '?').trim().charAt(0).toUpperCase()) + '</span>')
+      + '<span class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate flex-1">' + escHtml(t.name || 'Team') + '</span>'
+      + '<button type="button" data-favdel="' + g.lg.key + ':' + escHtml(t.id) + '" aria-label="Remove ' + escHtml(t.name || 'team') + ' from favorites" class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-[10px]"></i></button>'
+      + '</div>').join('')
+  ).join('');
+}
+(function gaidridFavTab() {
+  const box = document.getElementById('sportsBody');
+  if (!box) return;
+  box.addEventListener('click', (e) => {
+    const browse = e.target && e.target.closest ? e.target.closest('[data-favbrowse]') : null;
+    if (browse && box.contains(browse)) {
+      sportsTab = 'matches';
+      fetchSports();
+      return;
+    }
+    const del = e.target && e.target.closest ? e.target.closest('[data-favdel]') : null;
+    if (del && box.contains(del)) {
+      e.stopPropagation();
+      const parts = (del.getAttribute('data-favdel') || '').split(':');
+      const arr = ((state.sportsFav || {})[parts[0]] || []).filter((t) => t && String(t.id) !== parts[1]);
+      state.sportsFav = state.sportsFav || {};
+      state.sportsFav[parts[0]] = arr;
+      renderFavTab();
+      refreshSportsHome();
+      if (window.GaidridSave) window.GaidridSave();
+      return;
+    }
+    const row = e.target && e.target.closest ? e.target.closest('[data-favopen]') : null;
+    if (row && box.contains(row)) {
+      state.sportsLeague = row.getAttribute('data-favopen');
+      sportsTab = 'matches';
+      fetchSports();
+    }
+  });
+})();
 (function gaidridSportsSettings() {
   const dr = document.getElementById('defLeagueRow');
   if (dr) {
@@ -3166,6 +3687,7 @@ function paintSportsSettings() {
       if (!b || !dr.contains(b)) return;
       state.sportsLeague = b.getAttribute('data-defleague');
       paintSportsSettings();
+      refreshSportsHome();
     });
   }
   const ab = document.getElementById('sportsAutoBtn');
@@ -3207,24 +3729,59 @@ function paintNewsSettings() {
     state.newsFeeds.splice(parseInt(d.getAttribute('data-delfeed'), 10), 1);
     paintNewsSettings();
     if (window.GaidridSave) window.GaidridSave();
+    refreshNewsHome();
   });
   const input = document.getElementById('newsFeedInput');
   const err = document.getElementById('newsFeedErr');
   const add = document.getElementById('newsFeedAdd');
-  const doAdd = () => {
+  const sayErr = (t) => { if (err) { err.textContent = t; err.classList.remove('hidden'); } };
+  const doAdd = async () => {
     if (!input) return;
     const raw = (input.value || '').trim();
     let u = null;
     try { u = new URL(raw); } catch (e) {}
-    if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) { if (err) err.classList.remove('hidden'); return; }
+    if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) { sayErr('Enter a valid http(s) feed URL'); return; }
     if (err) err.classList.add('hidden');
-    if (!state.newsFeeds.some((f) => f.url === u.href)) state.newsFeeds.push({ name: u.hostname.replace(/^www\./, ''), url: u.href, builtin: false });
-    input.value = '';
-    paintNewsSettings();
-    if (window.GaidridSave) window.GaidridSave();
+    if (state.newsFeeds.some((f) => f.url === u.href)) { input.value = ''; return; }
+    if (add) add.disabled = true;
+    try {
+      // Verify the feed is readable before adding, and take its real title.
+      if (!(await hasNewsPerm())) {
+        if (!(await requestNewsPerm())) { sayErr('Allow site access first, then try again'); return; }
+      }
+      const res = await fetch(u.href);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const xml = await res.text();
+      parseFeed(xml, 'verify', u.href);
+      let name = u.hostname.replace(/^www\./, '');
+      try {
+        const doc = new DOMParser().parseFromString(xml, 'text/xml');
+        if (!doc.querySelector('parsererror')) {
+          const t = doc.querySelector('channel > title, feed > title');
+          if (t && t.textContent.trim()) name = t.textContent.trim().slice(0, 60);
+        }
+      } catch (e) {}
+      state.newsFeeds.push({ name, url: u.href, builtin: false });
+      input.value = '';
+      paintNewsSettings();
+      if (window.GaidridSave) window.GaidridSave();
+      refreshNewsHome();
+    } catch (e) {
+      sayErr("Couldn't read a valid feed at this URL");
+    } finally {
+      if (add) add.disabled = false;
+    }
   };
   if (add) add.addEventListener('click', doAdd);
   if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doAdd(); });
+  const rst = document.getElementById('newsFeedsReset');
+  if (rst) rst.addEventListener('click', () => {
+    state.newsFeeds = JSON.parse(JSON.stringify(NEWS_DEFAULTS));
+    state.newsFilter = 'all';
+    paintNewsSettings();
+    if (window.GaidridSave) window.GaidridSave();
+    refreshNewsHome();
+  });
   const ab = document.getElementById('newsAutoBtn');
   if (ab) ab.addEventListener('click', () => {
     state.newsAuto = !(state.newsAuto !== false);

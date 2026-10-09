@@ -31,7 +31,7 @@ textarea::selection {
   filter: brightness(0) invert(1);
 }
 
-/* Keyboard-selected search suggestion (P0-3) */
+/* Keyboard-selected search suggestion */
 .suggestion-item.sugg-active {
   background-color: rgb(var(--accent-rgb) / 0.08);
 }

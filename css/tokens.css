@@ -1,5 +1,5 @@
-/* Gaidrid design tokens — the single place to rebrand.
-   Phase 2 switches usage to --gaidrid-navy / --gaidrid-soft-white / --gaidrid-font. */
+/* Gaidrid design tokens — the single place to rebrand. Below: brand ink,
+   surfaces, font, and the accent color (overridden per choice). */
 :root {
   --gaidrid-navy: #212832;
   --gaidrid-soft-white: #eeeeee;
@@ -23,3 +23,9 @@ html[data-accent="pink"] { --accent-rgb: 219 39 119; }
 html[data-accent="orange"] { --accent-rgb: 234 88 12; }
 html[data-accent="red"] { --accent-rgb: 220 38 38; }
 html[data-accent="navy"] { --accent-rgb: 33 40 50; }
+
+/* Navy is near-black: on dark surfaces every accent-driven text/toggle would
+   vanish (e.g. news feed names). Lighten it to a steel blue in dark mode —
+   same hue family, readable everywhere. Other accents are mid-tones and
+   already legible in both modes. */
+html.dark[data-accent="navy"] { --accent-rgb: 139 155 180; }

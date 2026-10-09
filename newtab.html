@@ -46,11 +46,13 @@
                 <i class="fa-solid fa-gear text-base"></i>
             </button>
             <div class="w-px h-5 bg-gray-300 dark:bg-white/15"></div>
-            <button type="button" id="sportsBtn" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Sports scores">
+            <button type="button" id="sportsBtn" class="w-9 h-9 relative rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Sports scores">
                 <i class="fa-solid fa-trophy text-base"></i>
+                <span id="sportsLiveBadge" class="hidden absolute top-0 right-0 min-w-4 h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold items-center justify-center leading-4"></span>
             </button>
-            <button type="button" id="newsBtn" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="News / RSS">
+            <button type="button" id="newsBtn" class="w-9 h-9 relative rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="News / RSS">
                 <i class="fa-solid fa-newspaper text-base"></i>
+                <span id="newsLiveBadge" class="hidden absolute top-0 right-0 min-w-4 h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold items-center justify-center leading-4"></span>
             </button>
             <button type="button" id="pomoBtn" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Focus timer">
                 <i class="fa-solid fa-stopwatch text-base"></i>
@@ -85,7 +87,7 @@
                     <div class="relative flex items-center bg-white dark:bg-white/[0.07] rounded-full shadow-float border border-white/60 dark:border-white/10 p-1.5 sm:p-2 transition-all duration-300 focus-within:shadow-2xl">
                         
                         <!-- VERTICAL SCROLLABLE SEARCH ENGINE REEL -->
-                        <div id="engineReelWrap" class="relative flex flex-col items-center justify-center pl-2.5 sm:pl-3 pr-1 group cursor-grab active:cursor-grabbing select-none shrink-0" title="Scroll or Drag up/down to change search engine">
+                        <div id="engineReelWrap" class="relative flex flex-col items-center justify-center pl-1.5 sm:pl-2 pr-0.5 group cursor-grab active:cursor-grabbing select-none shrink-0" title="Scroll or Drag up/down to change search engine">
                             
                             <!-- Up Hint Arrow -->
                             <div id="engineArrowUp" class="absolute -top-2 left-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500 hidden">
@@ -93,62 +95,41 @@
                             </div>
 
                             <!-- Vertical Engine Wheel Picker (Responsive dynamic fit) -->
-                            <div id="engineReel" class="mode-reel-container overflow-y-auto overflow-x-hidden no-scrollbar w-24 sm:w-28 flex flex-col items-center">
+                            <div id="engineReel" class="mode-reel-container overflow-y-auto overflow-x-hidden no-scrollbar w-fit flex flex-col items-center">
                                 
                                 <!-- Google -->
                                 <div data-engine="google" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105">
-                                    <div class="flex items-center gap-1.5">
-                                        <img src="assets/engines/google.svg" alt="Google" class="w-5 h-5 object-contain shrink-0">
-                                        <span class="inline-flex items-center"><span class="text-[#1a73e8]">G</span><span class="text-google-red">o</span><span class="text-google-yellow">o</span><span class="text-[#1a73e8]">g</span><span class="text-google-green">l</span><span class="text-google-red">e</span></span>
-                                    </div>
+                                    <span class="inline-flex items-center"><span class="text-[#1a73e8]">G</span><span class="text-google-red">o</span><span class="text-google-yellow">o</span><span class="text-[#1a73e8]">g</span><span class="text-google-green">l</span><span class="text-google-red">e</span></span>
                                 </div>
 
                                 <!-- YouTube -->
                                 <div data-engine="youtube" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#FF0000]">
-                                    <div class="flex items-center gap-1.5">
-                                        <img src="assets/engines/youtube.svg" alt="YouTube" class="w-5 h-5 object-contain shrink-0">
-                                        <span>YouTube</span>
-                                    </div>
+                                    <span>YouTube</span>
                                 </div>
 
                                 <!-- Bing -->
                                 <div data-engine="bing" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#00838F] dark:text-[#00ACC1]">
-                                    <div class="flex items-center gap-1.5">
-                                        <img src="assets/engines/bing.svg" alt="Bing" class="w-5 h-5 object-contain shrink-0">
-                                        <span>Bing</span>
-                                    </div>
+                                    <span>Bing</span>
                                 </div>
 
                                 <!-- DuckDuckGo -->
                                 <div data-engine="duckduckgo" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-xs sm:text-sm transition-transform hover:scale-105 text-[#DE5833]">
-                                    <div class="flex items-center gap-1.5">
-                                        <img src="assets/engines/duckduckgo.svg" alt="DuckDuckGo" class="w-5 h-5 object-contain shrink-0">
-                                        <span>DuckDuck</span>
-                                    </div>
+                                    <span>DuckDuck</span>
                                 </div>
 
                                 <!-- Brave -->
                                 <div data-engine="brave" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#FF1B2D]">
-                                    <div class="flex items-center gap-1.5">
-                                        <img src="assets/engines/brave.svg" alt="Brave" class="w-5 h-5 object-contain shrink-0">
-                                        <span>Brave</span>
-                                    </div>
+                                    <span>Brave</span>
                                 </div>
 
                                 <!-- Yahoo -->
                                 <div data-engine="yahoo" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#6001D2] dark:text-[#9D4EDD]">
-                                    <div class="flex items-center gap-1.5">
-                                        <img src="assets/engines/yahoo.svg" alt="Yahoo" class="w-5 h-5 object-contain shrink-0">
-                                        <span>Yahoo!</span>
-                                    </div>
+                                    <span>Yahoo!</span>
                                 </div>
 
                                 <!-- Ecosia -->
                                 <div data-engine="ecosia" class="mode-reel-item flex items-center justify-center shrink-0 w-full whitespace-nowrap font-bold text-sm sm:text-base transition-transform hover:scale-105 text-[#00897B] dark:text-[#26A69A]">
-                                    <div class="flex items-center gap-1.5">
-                                        <img src="assets/engines/ecosia.svg" alt="Ecosia" class="w-5 h-5 object-contain shrink-0">
-                                        <span>Ecosia</span>
-                                    </div>
+                                    <span>Ecosia</span>
                                 </div>
 
                             </div>
@@ -160,30 +141,30 @@
                         </div>
 
                         <!-- Active Mode Badge (Tightly attached next to Engine Name) -->
-                        <span id="activeModeBadge" class="hidden text-[10px] font-semibold uppercase px-2 py-0.5 bg-[#1a73e8]/10 text-[#1a73e8] rounded-full transition-all shrink-0 ml-0.5 mr-1">
+                        <span id="activeModeBadge" class="hidden text-[10px] font-semibold uppercase px-1.5 sm:px-2 py-0.5 bg-[#1a73e8]/10 text-[#1a73e8] rounded-full transition-all shrink-0 mr-1">
                             All
                         </span>
 
-                        <div class="h-6 w-[1px] bg-gray-200 dark:bg-white/10 mx-1 shrink-0"></div>
+                        <div class="h-6 w-[1px] bg-gray-200 dark:bg-white/10 mx-0.5 sm:mx-1 shrink-0"></div>
 
                         <!-- Search Input Text Field -->
-                        <input type="text" id="searchInput" placeholder="Search Google or type a URL" autocomplete="off" class="w-full bg-transparent border-none outline-none px-3 text-gray-800 dark:text-gray-100 text-sm sm:text-base placeholder-gray-400 dark:placeholder-gray-500 font-normal">
+                        <input type="text" id="searchInput" placeholder="Search Google or type a URL" autocomplete="off" class="flex-1 min-w-0 bg-transparent border-none outline-none px-2 sm:px-3 text-gray-800 dark:text-gray-100 text-sm sm:text-base placeholder-gray-400 dark:placeholder-gray-500 font-normal">
 
                         <!-- Clear Search Text Button -->
-                        <button type="button" id="clearSearchBtn" class="hidden text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700/50 shrink-0">
+                        <button type="button" id="clearSearchBtn" class="hidden text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700/50 shrink-0">
                             <i class="fa-solid fa-xmark text-sm"></i>
                         </button>
 
                         <!-- Relocated Voice Search Mic Button -->
-                        <button type="button" id="voiceSearchBtn" class="w-9 h-9 flex items-center justify-center rounded-full text-google-red hover:bg-red-50 dark:hover:bg-red-950/30 transition-all focus:outline-none active:scale-90 mr-1 shrink-0" title="Search by Voice">
+                        <button type="button" id="voiceSearchBtn" class="w-9 h-9 hidden min-[420px]:flex items-center justify-center rounded-full text-google-red hover:bg-red-50 dark:hover:bg-red-950/30 transition-all focus:outline-none active:scale-90 mr-1 shrink-0" title="Voice search">
                             <i class="fa-solid fa-microphone text-base"></i>
                         </button>
 
                         <!-- Separator line before Vertical Reel -->
-                        <div class="h-7 w-[1px] bg-gray-200 dark:bg-white/10 mx-1 shrink-0"></div>
+                        <div class="h-7 w-[1px] bg-gray-200 dark:bg-white/10 mx-0.5 sm:mx-1 shrink-0"></div>
 
                         <!-- VERTICAL SCROLLABLE MODE REEL -->
-                        <div class="relative flex flex-col items-center justify-center px-1 group shrink-0" title="Scroll or Drag up/down to change mode">
+                        <div class="relative flex flex-col items-center justify-center px-0.5 sm:px-1 group shrink-0" title="Scroll or Drag up/down to change mode">
                             
                             <!-- Up Hint Arrow (Hidden at top item) -->
                             <div id="arrowUp" class="absolute -top-2 left-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500 hidden">
@@ -191,39 +172,39 @@
                             </div>
 
                             <!-- Vertical Mode Wheel Picker -->
-                            <div id="modeReel" class="mode-reel-container overflow-y-auto overflow-x-hidden no-scrollbar w-10 sm:w-11 flex flex-col items-center cursor-grab active:cursor-grabbing select-none">
+                            <div id="modeReel" class="mode-reel-container overflow-y-auto overflow-x-hidden no-scrollbar w-9 sm:w-11 flex flex-col items-center cursor-grab active:cursor-grabbing select-none">
                                 
                                 <!-- Mode 1: All -->
                                 <div data-mode="all" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-[#1a73e8] font-bold text-xs shadow-xs">
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-[#1a73e8] font-bold text-xs shadow-xs">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                     </div>
                                 </div>
 
                                 <!-- Mode 2: News -->
                                 <div data-mode="news" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-yellow-50 dark:bg-yellow-950/40 text-google-yellow font-bold text-xs shadow-xs">
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-yellow-50 dark:bg-yellow-950/40 text-google-yellow font-bold text-xs shadow-xs">
                                         <i class="fa-solid fa-bullhorn"></i>
                                     </div>
                                 </div>
 
                                 <!-- Mode 3: Maps -->
                                 <div data-mode="maps" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-green-50 dark:bg-green-950/40 text-google-green font-bold text-xs shadow-xs">
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-green-50 dark:bg-green-950/40 text-google-green font-bold text-xs shadow-xs">
                                         <i class="fa-solid fa-location-dot"></i>
                                     </div>
                                 </div>
 
                                 <!-- Mode 4: Images -->
                                 <div data-mode="images" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-[#1a73e8] font-bold text-xs shadow-xs">
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-[#1a73e8] font-bold text-xs shadow-xs">
                                         <i class="fa-solid fa-image"></i>
                                     </div>
                                 </div>
 
                                 <!-- Mode 5: Videos -->
                                 <div data-mode="videos" class="mode-reel-item flex items-center justify-center shrink-0 w-full transition-transform hover:scale-110">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-red-50 dark:bg-red-950/40 text-google-red font-bold text-xs shadow-xs">
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-red-50 dark:bg-red-950/40 text-google-red font-bold text-xs shadow-xs">
                                         <i class="fa-solid fa-play text-[10px]"></i>
                                     </div>
                                 </div>
@@ -247,6 +228,12 @@
                 </form>
 
             </div>
+
+            <!-- FAVORITE TEAM: next match chip (hidden unless your team plays soon) -->
+            <button id="favMatchChip" type="button" class="hidden mx-auto mt-4 max-w-2xl items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/70 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 hover:border-amber-400/60 transition-all">
+                <i class="fa-solid fa-star text-[10px] text-amber-400"></i>
+                <span id="favMatchLabel"></span>
+            </button>
 
             <!-- OFFLINE: dino game replaces the search bar -->
             <div id="dinoHost" class="w-full max-w-2xl my-2">
@@ -277,7 +264,7 @@
             </div>
 
             <!-- Bottom Right Extension Info Icon -->
-            <button id="infoBtn" class="self-stretch aspect-square rounded-full flex items-center justify-center bg-white/70 dark:bg-white/[0.07] border border-gray-200/50 dark:border-white/10 text-gray-500 hover:text-gray-800 dark:hover:text-white shadow-sm backdrop-blur-md transition-all" title="About Extension">
+            <button id="infoBtn" class="self-stretch aspect-square rounded-full flex items-center justify-center bg-white/70 dark:bg-white/[0.07] border border-gray-200/50 dark:border-white/10 text-gray-500 hover:text-gray-800 dark:hover:text-white shadow-sm backdrop-blur-md transition-all" title="About Gaidrid">
                 <i class="fa-solid fa-info text-xs"></i>
             </button>
         </footer>
@@ -293,7 +280,7 @@
                 <h3 class="font-semibold text-base text-gray-800 dark:text-gray-100">Shortcuts</h3>
             </div>
             <div class="flex items-center gap-2">
-                <button id="openAddAppBtn" class="w-8 h-8 flex items-center justify-center rounded-full bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white transition-all text-xs" title="Add Application">
+                <button id="openAddAppBtn" class="w-8 h-8 flex items-center justify-center rounded-full bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white transition-all text-xs" title="Add shortcut">
                     <i class="fa-solid fa-plus"></i>
                 </button>
                 <button id="closeDrawerBtn" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all">
@@ -315,7 +302,7 @@
     <div id="addAppModal" role="dialog" aria-modal="true" aria-label="Add shortcut" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-gray-700">
             <div class="flex items-center justify-between mb-4">
-                <h3 id="addAppTitle" class="text-base font-semibold text-gray-800 dark:text-gray-100">Add Application Shortcut</h3>
+                <h3 id="addAppTitle" class="text-base font-semibold text-gray-800 dark:text-gray-100">Add shortcut</h3>
                 <button id="closeAddAppBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -345,7 +332,7 @@
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" id="cancelAddAppBtn" class="px-3 py-1.5 rounded-xl text-xs font-medium text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-                    <button type="submit" id="addAppSubmit" class="px-4 py-1.5 bg-google-blue text-white rounded-xl text-xs font-semibold hover:bg-blue-600 transition-colors">Add App</button>
+                    <button type="submit" id="addAppSubmit" class="px-4 py-1.5 bg-google-blue text-white rounded-xl text-xs font-semibold hover:bg-blue-600 transition-colors">Add shortcut</button>
                 </div>
             </form>
         </div>
@@ -391,7 +378,7 @@
 
                 <!-- Display Name -->
                 <div>
-                    <div class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Display name</div>
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Your name</div>
                     <input type="text" id="userNameInput" autocomplete="off" placeholder="Your name (optional)" class="w-full bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-gray-800 dark:text-gray-100 outline-none transition-all shadow-xs">
                 </div>
 
@@ -481,7 +468,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="text-sm font-medium text-gray-700 dark:text-gray-200">24-Hour Time Format</div>
-                        <div class="text-xs text-gray-400">Display time as 05:38 vs 05:38 AM</div>
+                        <div class="text-xs text-gray-400">05:38 instead of 05:38 AM</div>
                     </div>
                     <button id="clockFormatBtn" class="w-12 h-6 bg-gray-200 dark:bg-white/10 rounded-full p-1 transition-colors relative shrink-0">
                         <div id="clockToggleCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-0"></div>
@@ -513,7 +500,7 @@
                 <!-- Time Greeting -->
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Time Greeting</div>
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Greeting</div>
                         <div class="text-xs text-gray-400">Display contextual greeting ("Good Morning")</div>
                     </div>
                     <button id="showGreetingBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
@@ -550,7 +537,7 @@
 
                 <!-- 2. Custom City / Location Input (Moved directly under Show Weather Widget) -->
                 <div class="pt-1 relative">
-                    <div class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">City Location</div>
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">City</div>
                     <div class="text-xs text-gray-400 mb-2">Set custom location or leave blank for default</div>
                     <div class="relative">
                         <input type="text" id="weatherLocationInput" autocomplete="off" placeholder="e.g. Cairo, Alexandria, London" value="Cairo" class="w-full bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-gray-800 dark:text-gray-100 outline-none transition-all shadow-xs">
@@ -566,7 +553,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Temperature Scale</div>
-                        <div class="text-xs text-gray-400">Choose between Celsius (°C) and Fahrenheit (°F)</div>
+                        <div class="text-xs text-gray-400">Celsius (°C) or Fahrenheit (°F)</div>
                     </div>
                     <div class="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg text-xs font-medium shrink-0">
                         <button id="unitC" class="px-2.5 py-1 rounded-md bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-xs">°C</button>
@@ -593,7 +580,7 @@
                 <div>
                     <div class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Default league</div>
                     <div id="defLeagueRow" class="flex gap-1.5 flex-wrap"></div>
-                    <div class="text-xs text-gray-400 mt-1">Pick a favorite team with the star inside the Sports window</div>
+                    <div class="text-xs text-gray-400 mt-1">Tap the star on any team to keep favorites here</div>
                 </div>
 
                 <!-- Auto Refresh -->
@@ -611,7 +598,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Show finished matches</div>
-                        <div class="text-xs text-gray-400">Hide FT results to focus on live and upcoming</div>
+                        <div class="text-xs text-gray-400">Hide finished results to focus on live and upcoming</div>
                     </div>
                     <button id="sportsFinishedBtn" class="w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0">
                         <div id="sportsFinishedCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></div>
@@ -631,6 +618,7 @@
                         <button type="button" id="newsFeedAdd" class="px-3.5 rounded-xl text-xs font-semibold bg-google-blue text-white hover:bg-blue-600 transition-all shrink-0">Add</button>
                     </div>
                     <div id="newsFeedErr" class="hidden text-xs text-red-500 mt-1">Enter a valid http(s) feed URL</div>
+                    <button id="newsFeedsReset" type="button" class="text-[11px] text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 mt-1.5 transition-colors">Reset to defaults</button>
                     <div class="text-xs text-gray-400 mt-1">Feeds are read directly in the News window (one-time site access)</div>
                 </div>
 
@@ -691,7 +679,7 @@
             <p class="text-xs text-gray-400 mt-1 mb-4">One Tab. Everything.</p>
             <div class="text-left space-y-2.5 text-sm text-gray-600 dark:text-gray-300">
                 <div class="flex items-center gap-2.5"><i class="fa-solid fa-keyboard text-[11px] text-gray-400 w-4 text-center"></i><span>Press <b>/</b> anywhere to search</span></div>
-                <div class="flex items-center gap-2.5"><i class="fa-solid fa-arrows-up-down text-[11px] text-gray-400 w-4 text-center"></i><span>Swap engines with the side reels</span></div>
+                <div class="flex items-center gap-2.5"><i class="fa-solid fa-arrows-up-down text-[11px] text-gray-400 w-4 text-center"></i><span>Scroll the reels beside search to swap engine and mode</span></div>
                 <div class="flex items-center gap-2.5"><i class="fa-solid fa-gear text-[11px] text-gray-400 w-4 text-center"></i><span>Make it yours in settings</span></div>
             </div>
             <div class="mt-6">
@@ -704,9 +692,9 @@
 
     <!-- SPORTS MODAL -->
     <div id="sportsModal" role="dialog" aria-modal="true" aria-label="Sports" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-white/10">
+        <div class="bg-white dark:bg-[#232c38] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-white/10 relative">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">Sports</h3>
+                <h3 id="sportsTitle" class="text-base font-semibold text-gray-800 dark:text-gray-100">Sports</h3>
                 <div class="flex items-center gap-1">
                     <button id="sportsRefreshBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Refresh scores">
                         <i class="fa-solid fa-rotate text-xs"></i>
@@ -719,6 +707,7 @@
             <div role="tablist" class="flex bg-gray-100 dark:bg-white/[0.06] p-1 rounded-lg text-xs font-medium mb-3">
                 <button id="sportsTabMatches" role="tab" aria-selected="true" class="flex-1 px-2.5 py-1 rounded-md">Matches</button>
                 <button id="sportsTabTable" role="tab" aria-selected="false" class="flex-1 px-2.5 py-1 rounded-md">Table</button>
+                <button id="sportsTabFav" role="tab" aria-selected="false" class="flex-1 px-2.5 py-1 rounded-md">Favorites</button>
             </div>
                     <div id="sportsLeagues" class="flex flex-wrap gap-1.5 mb-3"></div>
             <div id="sportsDayRow" class="flex items-center justify-between mb-3">
@@ -749,6 +738,8 @@
                     <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100 truncate">News</h3>
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
+                    <button id="newsFontDec" class="hidden w-8 h-8 rounded-full items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-[11px] font-bold" title="Smaller text">A−</button>
+                    <button id="newsFontInc" class="hidden w-8 h-8 rounded-full items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-xs font-bold" title="Larger text">A+</button>
                     <button id="newsRefreshBtn" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all" title="Refresh feeds">
                         <i class="fa-solid fa-rotate text-xs"></i>
                     </button>
@@ -757,6 +748,15 @@
                     </button>
                 </div>
             </div>
+            <div id="newsSearchWrap" class="flex items-center gap-2 mb-2.5">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400"></i>
+                    <input type="text" id="newsSearchInput" autocomplete="off" placeholder="Search stories" class="w-full bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-gray-800 dark:text-gray-100 outline-none">
+                </div>
+                <button id="newsMarkRead" type="button" class="text-[11px] font-semibold text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 whitespace-nowrap transition-colors" title="Mark all read">Mark all read</button>
+            </div>
+            <div id="newsFilters" class="flex gap-1.5 flex-wrap mb-3"></div>
+            <div id="newsProgressWrap" class="hidden h-1 rounded-full bg-gray-100 dark:bg-white/10 mb-2 overflow-hidden"><div id="newsProgress" class="h-full w-0 bg-google-blue rounded-full transition-[width] duration-150"></div></div>
             <div id="newsList" class="space-y-2 max-h-[55vh] overflow-y-auto no-scrollbar min-h-[120px]"></div>
             <article id="newsArticle" class="hidden max-h-[55vh] overflow-y-auto no-scrollbar pr-1"></article>
             <div id="newsArticleFoot" class="hidden mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3">
@@ -785,6 +785,15 @@
                     <i class="fa-solid fa-rotate-left text-xs"></i>
                 </button>
             </div>
+            <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-white/10 text-left">
+                <div>
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-200">Notify when finished</div>
+                    <div class="text-xs text-gray-400">System notification (asks permission)</div>
+                </div>
+                <button id="pomoNotifyBtn" class="w-12 h-6 bg-gray-200 dark:bg-white/10 rounded-full p-1 transition-colors relative shrink-0">
+                    <div id="pomoNotifyCircle" class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-x-0"></div>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -797,22 +806,22 @@
             <div class="flex justify-center mb-4 pt-2">
                 <img src="assets/gaidrid-logotype.svg" alt="Gaidrid" class="brand-logo h-9 w-auto">
             </div>
-            <p class="text-xs text-gray-400 mt-0.5 mb-3">Version 1.1.0</p>
+            <p class="text-xs text-gray-400 mt-0.5 mb-3">Version 1.2.0</p>
             <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">One Tab. Everything.</p>
             <div class="mt-4 flex items-center justify-center gap-2">
-                <a href="https://facebook.com/gaidrid" target="_blank" rel="noopener" aria-label="Facebook" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#1877F2] hover:border-[#1877F2]/40 transition-all">
+                <a href="https://facebook.com/gaidrid" target="_blank" rel="noopener" aria-label="Facebook" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#1877F2] hover:border-[#1877F2]/40 transition-all">
                     <i class="fa-brands fa-facebook-f text-sm"></i>
                 </a>
-                <a href="https://instagram.com/gaidrid" target="_blank" rel="noopener" aria-label="Instagram" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#E4405F] hover:border-[#E4405F]/40 transition-all">
+                <a href="https://instagram.com/gaidrid" target="_blank" rel="noopener" aria-label="Instagram" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#E4405F] hover:border-[#E4405F]/40 transition-all">
                     <i class="fa-brands fa-instagram text-sm"></i>
                 </a>
-                <a href="https://x.com/gaidrid" target="_blank" rel="noopener" aria-label="X" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/30 transition-all">
+                <a href="https://x.com/gaidrid" target="_blank" rel="noopener" aria-label="X" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/30 transition-all">
                     <i class="fa-brands fa-x-twitter text-sm"></i>
                 </a>
-                <a href="https://www.threads.com/@gaidrid" target="_blank" rel="noopener" aria-label="Threads" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/30 transition-all">
+                <a href="https://www.threads.com/@gaidrid" target="_blank" rel="noopener" aria-label="Threads" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/30 transition-all">
                     <i class="fa-brands fa-threads text-sm"></i>
                 </a>
-                <a href="https://github.com/dratiux/Gaidrid" target="_blank" rel="noopener" aria-label="GitHub" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#181717] dark:hover:text-white hover:border-[#181717]/40 dark:hover:border-white/30 transition-all">
+                <a href="https://github.com/dratiux/Gaidrid" target="_blank" rel="noopener" aria-label="GitHub" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#181717] dark:hover:text-white hover:border-[#181717]/40 dark:hover:border-white/30 transition-all">
                     <i class="fa-brands fa-github text-sm"></i>
                 </a>
             </div>

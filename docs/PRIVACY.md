@@ -69,6 +69,9 @@ Gaidrid requests the minimum:
 - **`topSites`** (optional, requested only when you enable the shortcuts row)
   — to suggest frequently-visited sites. Data is read locally; we do not send
   it anywhere.
+- **`notifications`** (optional, requested only when you enable timer-end
+  alerts in the focus timer) — to tell you when a focus or break session ends.
+  No content beyond the timer state is sent anywhere.
 - **Host access (`https://*/*`, `http://*/*`, optional)** — only if you opt
   in to RSS/news or shortcut favicons from arbitrary domains. Remote
   responses are rendered as data, never executed as code; Gaidrid follows the

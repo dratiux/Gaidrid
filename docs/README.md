@@ -1,14 +1,10 @@
-# Gaidrid
-
-A Manifest V3 browser extension that turns every new tab into a focused,
-visually refined workspace. Minimal interface, quick access, zero clutter.
-
 ## Features
 
 - **Multi-engine search** — Google, YouTube, Bing, DuckDuckGo, Brave, Yahoo,
   Ecosia with result-type modes (All, News, Maps, Images, Videos), live
   suggestions, history and an offline calculator (`12*45` → `540`). Engine
-  bangs (`!yt cats`, `!b …`, `!dd …`) run one search on another engine.
+  bangs (`!yt cats`, `!b …`, `!dd …`) run one search on another engine —
+  type `!` to see all shortcuts.
 - **Clock, date & greeting** — 12/24-hour, seconds toggle, optional name.
 - **Live weather** — city or browser geolocation (cached, permission asked
   only on explicit action), °C/°F.
@@ -16,19 +12,26 @@ visually refined workspace. Minimal interface, quick access, zero clutter.
   search (Iconify), custom tile art.
 - **Frequently visited** — optional top-sites row (permission requested
   only when enabled).
-- **Sports** — optional scores, live status and standings for UCL, EPL, NBA
-  and NFL from ESPN's public endpoints (no key, no account). Day navigation
-  ±7 days, one favorite team per league, and an optional 60-second
-  auto-refresh that pauses while the tab is hidden.
+- **Sports** — optional scores, live status and standings for 10 leagues
+  (UCL, EPL, La Liga, Serie A, Bundesliga, Ligue 1, NBA, NFL, MLB, NHL) from
+  ESPN's public endpoints (no key, no account). Day navigation ±7 days,
+  multiple favorite teams per league with a quick list inside the Sports
+  window, a next-match chip on the home page, a live count badge on the
+  toolbar for your favorite teams only, per-sport card styling, and an
+  optional 60-second auto-refresh that pauses while the tab is hidden.
 - **RSS news** — built-in feeds (Hacker News, BBC, Ars Technica, NPR by
-  default) with your own extra feeds, lazy-loaded thumbnails, and Readability-
-  extracted reading view. Network call only when you open the dock.
+  default) with your own extra feeds (verified on add, auto-named), per-feed
+  filter chips, text search, unread dots with mark-all-read and a toolbar
+  unread-count badge, lazy-loaded thumbnails, and a Readability-extracted
+  reading view with font size, read-time estimate and progress bar.
+  Network call only when you open the dock.
 - **Extras** — Pomodoro timer, quick notes, daily quote, keyboard shortcuts
   (`/`, `1–8`, arrows, `Enter`, `Esc`), Light/Dark/Auto theme, accent color
   picker, night schedule (force dark in a time window), JSON backup,
   first-run onboarding, splash screen.
 - **Side panel** — open the same workspace in the browser's side panel;
-  search and shortcuts there open results in a new tab.
+  search and shortcuts there open results in a new tab. Keyboard shortcut
+  `Ctrl+Shift+K` (`Cmd+Shift+K` on Mac).
 - **Privacy-first** — fully offline bundle (Tailwind, FontAwesome, fonts
   vendored); sync storage with local fallback; no accounts, ads or trackers.
   See [PRIVACY.md](PRIVACY.md).
