@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/dratiux/Gaidrid/security/advisories/new
+    about: Do not file public issues for security problems. Report privately instead (see SECURITY.md).
+
+  - name: Privacy question
+    url: https://github.com/dratiux/Gaidrid/issues
+    about: Questions about PRIVACY.md or data handling? File it here.

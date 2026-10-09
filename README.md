@@ -1,3 +1,12 @@
+# Gaidrid
+
+<p align="center">
+  <a href="https://github.com/dratiux/Gaidrid/actions/workflows/validate.yml"><img src="https://github.com/dratiux/Gaidrid/actions/workflows/validate.yml/badge.svg" alt="Validate"></a>
+  <a href="https://github.com/dratiux/Gaidrid/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
+</p>
+
+> Privacy-first MV3 new-tab page: multi-engine search, shortcuts, weather, sports, RSS news, and extras — offline-first, no accounts or trackers.
+
 ## Features
 
 - **Multi-engine search** — Google, YouTube, Bing, DuckDuckGo, Brave, Yahoo,
@@ -85,6 +94,12 @@ listing description, and the hosted [`PRIVACY.md`](PRIVACY.md) URL.
 [MIT](LICENSE) © 2026 dratiux. Third-party components keep their own
 licenses — see [NOTICE](NOTICE).
 
-## Credits
+---
 
-Crafted with care by **dratiux**.
+<p align="center">
+  <br>
+  <sub>CRAFTED WITH CARE BY DRATIUX</sub>
+  <br><br>
+  <a href="https://paypal.me/dratiux"><img src="https://img.shields.io/badge/PayPal-F2F2F2?logo=paypal&logoColor=003087&style=flat" alt="PayPal"></a>
+  <a href="https://ko-fi.com/dratiux"><img src="https://img.shields.io/badge/Ko--fi-F2F2F2?logo=ko-fi&logoColor=FF5E5B&style=flat" alt="Ko-fi"></a>
+</p>
