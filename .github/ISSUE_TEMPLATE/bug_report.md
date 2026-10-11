@@ -25,7 +25,7 @@ What you expected to happen, and what happened instead. Include console output i
 - **Browser:**
 - **OS / Device:**
 - **Extension version or commit:**
-- **Enabled features (sports, RSS, top-sites, weather):**
+- **Enabled features (sports, RSS, top-sites, weather, palette, tasks, language, theme):**
 
 ## Additional Context
 

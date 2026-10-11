@@ -16,10 +16,10 @@
 
 ## Where things live
 
-- `manifest.json` — MV3: newtab override, storage + optional topSites.
+- `manifest.json` — MV3: newtab override, side panel + shortcut command, storage + optional topSites/notifications/tabs/bookmarks.
 - `newtab.html` — new-tab page (no inline code; scripts reference `js/` files).
 - `css/` — tokens, fonts, base, brand layer (built from `build/input.css` via Tailwind).
-- `js/` — config, app, theme pre-paint.
+- `js/` — config, app, i18n dictionary (en/ar), background worker, theme pre-paint.
 - `assets/` — icons, engine marks, logotypes, fonts.
 - `vendor/` — FontAwesome + Readability (local, no CDN).
 
@@ -28,9 +28,11 @@ No-code customization: `js/config.js` (defaults, cities, engine/icon overrides),
 ## Before pushing
 
 ```sh
-node --check js/app.js
+node --check js/app.js js/i18n.js js/theme-init.js js/background.js js/config.js
 npm run build
 ```
+
+(`tests/` holds a maintainer-local suite and is gitignored — not required for contributions.)
 
 Then reload the unpacked extension (🔄 on the extension card) and refresh the tab. The CI runs the same checks on every push/PR.
 

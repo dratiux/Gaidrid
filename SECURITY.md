@@ -8,7 +8,7 @@ Only the default branch is supported. Older checkouts and forks are not patched.
 
 Gaidrid is a fully offline browser extension: no accounts, no backend, no analytics. See [PRIVACY.md](PRIVACY.md).
 
-In scope: the extension code in this repository (search, shortcuts, weather, sports, RSS, side panel, settings).
+In scope: the extension code in this repository (search, shortcuts, weather, sports, RSS, command palette, tasks, themes, side panel, settings).
 
 Out of scope: third-party services (search engines, Open-Meteo, ESPN, Iconify, favicon service), browser vulnerabilities, and social-engineering attacks.
 

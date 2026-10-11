@@ -90,10 +90,10 @@
                     <div class="relative flex items-center bg-white dark:bg-white/[0.07] rounded-full shadow-float border border-white/60 dark:border-white/10 p-1.5 sm:p-2 transition-all duration-300 focus-within:shadow-2xl">
                         
                         <!-- VERTICAL SCROLLABLE SEARCH ENGINE REEL -->
-                        <div id="engineReelWrap" data-i18n-title="reel_engine_title" class="relative flex flex-col items-center justify-center ps-1.5 sm:ps-2 pe-0.5 group cursor-grab active:cursor-grabbing select-none shrink-0" title="Scroll or Drag up/down to change search engine">
+                        <div id="engineReelWrap" data-i18n-title="reel_engine_title" class="relative flex flex-col items-center justify-center px-1 sm:px-1.5 group cursor-grab active:cursor-grabbing select-none shrink-0" title="Scroll or Drag up/down to change search engine">
                             
                             <!-- Up Hint Arrow -->
-                            <div id="engineArrowUp" class="absolute -top-2 start-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500 hidden">
+                            <div id="engineArrowUp" class="absolute -top-2 start-0 end-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500 hidden">
                                 <i class="fa-solid fa-chevron-up hint-up"></i>
                             </div>
 
@@ -138,7 +138,7 @@
                             </div>
 
                             <!-- Down Hint Arrow -->
-                            <div id="engineArrowDown" class="absolute -bottom-2 start-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500">
+                            <div id="engineArrowDown" class="absolute -bottom-2 start-0 end-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500">
                                 <i class="fa-solid fa-chevron-down hint-down"></i>
                             </div>
                         </div>
@@ -170,7 +170,7 @@
                         <div class="relative flex flex-col items-center justify-center px-0.5 sm:px-1 group shrink-0" data-i18n-title="reel_mode_title" title="Scroll or Drag up/down to change mode">
                             
                             <!-- Up Hint Arrow (Hidden at top item) -->
-                            <div id="arrowUp" class="absolute -top-2 start-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500 hidden">
+                            <div id="arrowUp" class="absolute -top-2 start-0 end-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500 hidden">
                                 <i class="fa-solid fa-chevron-up hint-up"></i>
                             </div>
 
@@ -215,7 +215,7 @@
                             </div>
 
                             <!-- Down Hint Arrow (Hidden at bottom item) -->
-                            <div id="arrowDown" class="absolute -bottom-2 start-1/2 -translate-x-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500">
+                            <div id="arrowDown" class="absolute -bottom-2 start-0 end-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[10px] text-gray-400 dark:text-gray-500">
                                 <i class="fa-solid fa-chevron-down hint-down"></i>
                             </div>
                         </div>
@@ -280,7 +280,7 @@
         <!-- Drawer Header -->
         <div class="p-6 flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <h3 class="font-semibold text-base text-gray-800 dark:text-gray-100">Shortcuts</h3>
+                <h3 class="font-semibold text-base text-gray-800 dark:text-gray-100" data-i18n="drawer_title">Shortcuts</h3>
             </div>
             <div class="flex items-center gap-2">
                 <button id="openAddAppBtn" class="w-8 h-8 flex items-center justify-center rounded-full bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white transition-all text-xs" data-i18n-title="add_shortcut" title="Add shortcut">
@@ -894,7 +894,7 @@
             <div class="flex justify-center mb-4 pt-2">
                 <img src="assets/gaidrid-logotype.svg" alt="Gaidrid" class="brand-logo h-9 w-auto">
             </div>
-            <p id="aboutVersion" data-ver="2.0.0" class="text-xs text-gray-400 mt-0.5 mb-3">Version 2.0.0</p>
+            <p id="aboutVersion" data-ver="2.0.1" class="text-xs text-gray-400 mt-0.5 mb-3">Version 2.0.1</p>
             <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">One Tab. Everything.</p>
             <div class="mt-4 flex items-center justify-center gap-2">
                 <a href="https://facebook.com/gaidrid" target="_blank" rel="noopener" aria-label="Facebook" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:text-[#1877F2] hover:border-[#1877F2]/40 transition-all">

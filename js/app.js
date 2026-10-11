@@ -385,7 +385,7 @@ const state = {
                 timeStr = `${String(hours).padStart(2, '0')}:${minutes}${state.showSeconds ? ':' + seconds : ''}`;
             }
 
-            digitalClock.textContent = timeStr;
+            digitalClock.textContent = localizeDigits(timeStr);
 
             // Date Visibility
             if (state.showDate) {
@@ -710,7 +710,7 @@ const state = {
             if (mode === 'all') {
                 activeModeBadge.classList.add('hidden');
             } else {
-                activeModeBadge.textContent = mode;
+                activeModeBadge.textContent = modeName(mode);
                 activeModeBadge.className = `text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full me-1 transition-all ${modeColors[mode].bg} ${modeColors[mode].text}`;
                 activeModeBadge.classList.remove('hidden');
             }
@@ -873,6 +873,11 @@ const state = {
         let suggActive = -1;
         let suggSeq = 0;
         let suggCtl = null;
+
+        // Mouse takes over from keyboard: avoids two highlighted rows at once.
+        if (suggestionsList) suggestionsList.addEventListener('mousemove', () => {
+            if (suggActive !== -1) { suggActive = -1; paintSuggActive(); }
+        });
 
         function escHtml(s) {
             return String(s).replace(/[&<>"']/g, function (c) {
@@ -1256,21 +1261,32 @@ const state = {
             }
         });
 
+        let voiceRecog = null;
+        function stopVoiceRecog() {
+            try { if (voiceRecog && voiceRecog.stop) voiceRecog.stop(); } catch (e) {}
+            voiceRecog = null;
+        }
         function openVoiceModal() {
             voiceModal.classList.remove('opacity-0', 'pointer-events-none');
             voiceStatusText.textContent = t('voice_listening');
 
             // Simulate Web Speech Recognition
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                const recognition = new SpeechRecognition();
-                recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    searchInput.value = transcript;
-                    closeVoiceModal();
-                    searchForm.dispatchEvent(new Event('submit'));
-                };
-                recognition.start();
+                try {
+                    stopVoiceRecog();
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const recognition = new SpeechRecognition();
+                    voiceRecog = recognition;
+                    recognition.onresult = (event) => {
+                        try { searchInput.value = event.results[0][0].transcript; } catch (e) {}
+                        stopVoiceRecog();
+                        closeVoiceModal();
+                        searchForm.dispatchEvent(new Event('submit'));
+                    };
+                    recognition.onerror = () => { stopVoiceRecog(); voiceStatusText.textContent = t('voice_try'); };
+                    recognition.onend = () => { voiceRecog = null; };
+                    recognition.start();
+                } catch (e) { voiceStatusText.textContent = t('voice_try'); }
             } else {
                 // Fallback simulation delay
                 setTimeout(() => {
@@ -1280,6 +1296,7 @@ const state = {
         }
 
         function closeVoiceModal() {
+            stopVoiceRecog();
             voiceModal.classList.add('opacity-0', 'pointer-events-none');
         }
 
@@ -1475,8 +1492,8 @@ function fmtNightTime(hhmm) {
   const p = String(hhmm || '00:00').split(':');
   const h = parseInt(p[0], 10) || 0;
   const m = (p[1] || '00').slice(-2).padStart(2, '0');
-  if (state.use24Hour) return (h < 10 ? '0' + h : h) + ':' + m;
-  return (h % 12 || 12) + ':' + m + ' ' + dayPeriod(h);
+  if (state.use24Hour) return localizeDigits((h < 10 ? '0' + h : h) + ':' + m);
+  return localizeDigits((h % 12 || 12) + ':' + m + ' ' + dayPeriod(h));
 }
 
 function updateTimeButtons() {
@@ -1616,6 +1633,16 @@ function fetchGeoWeather(userInitiated) {
     if (state.useGeolocation) fetchGeoWeather(true);
     else fetchLiveWeather(state.weatherLocation || 'Cairo', true);
   });
+  // Weather goes stale otherwise: silent refresh every 30 min while visible.
+  // fromGeo=true keeps it passive (cache/geolocation-cache first, never prompts).
+  let weatherRefreshTimer = null;
+  if (!weatherRefreshTimer) {
+    weatherRefreshTimer = setInterval(() => {
+      if (!document.hidden && !offlineMode && state.showWeather !== false) {
+        fetchLiveWeather(state.weatherLocation || 'Cairo', true);
+      }
+    }, 30 * 60 * 1000);
+  }
 
   // Global Escape: closes drawer, modals, suggestions
   document.addEventListener('keydown', (e) => {
@@ -1983,21 +2010,25 @@ let pomoMode = 'focus';
 let pomoLeft = POMO_FOCUS;
 let pomoOn = false;
 let pomoTimer = null;
+let pomoEndsAt = 0;
 function pomoPaint() {
   const timeEl = document.getElementById('pomoTime');
   const l = document.getElementById('pomoLabel');
   const ic = document.getElementById('pomoToggleIcon');
   const tb = document.getElementById('pomoToggle');
-  if (timeEl) timeEl.textContent = String(Math.floor(pomoLeft / 60)).padStart(2, '0') + ':' + String(pomoLeft % 60).padStart(2, '0');
+  if (timeEl) timeEl.textContent = localizeDigits(String(Math.floor(pomoLeft / 60)).padStart(2, '0') + ':' + String(pomoLeft % 60).padStart(2, '0'));
   if (l) l.textContent = pomoMode === 'focus' ? t('pomo_focus') : t('pomo_break');
   if (ic) ic.className = pomoOn ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]';
   if (tb) tb.title = pomoOn ? t('pomo_pause') : t('pomo_start');
 }
 function pomoTick() {
-  if (pomoLeft > 0) { pomoLeft--; pomoPaint(); return; }
+  // Timestamp-based: stays accurate when background tabs throttle intervals.
+  pomoLeft = Math.max(0, Math.round((pomoEndsAt - Date.now()) / 1000));
+  if (pomoLeft > 0) { pomoPaint(); return; }
   const was = pomoMode;
   pomoMode = pomoMode === 'focus' ? 'break' : 'focus';
   pomoLeft = pomoMode === 'focus' ? POMO_FOCUS : POMO_BREAK;
+  pomoEndsAt = Date.now() + pomoLeft * 1000;
   pomoPaint();
   if (was === 'focus') recordPomoSession();
   pomoNotifyDone(pomoMode === 'break' ? 'Focus done — take a break' : 'Break over — back to focus');
@@ -2084,6 +2115,19 @@ function observeDinoMoon() {
     new MutationObserver(readDinoMoon).observe(d.documentElement, { attributes: true, attributeFilter: ['class'] });
   } catch (e) {}
 }
+// Search mode display name (badge), localized.
+function modeName(m) {
+  const map = { all: t('mode_all'), news: t('mode_news'), maps: t('mode_maps'), images: t('mode_images'), videos: t('mode_videos') };
+  return map[m] || m;
+}
+// Localize Western digits (Arabic-Indic in Arabic). Digits live in the dict
+// so app.js stays Arabic-free for the audit gate.
+function localizeDigits(s) {
+  const out = String(s);
+  if (typeof gaidridLang !== 'function' || gaidridLang() !== 'ar') return out;
+  const map = t('ar_digits');
+  return out.replace(/[0-9]/g, (d) => map[+d] || d);
+}
 // Day period word, localized via the day_am / day_pm dictionary keys.
 function dayPeriod(h) {
   if (typeof gaidridLang === 'function' && gaidridLang() === 'ar') return h < 12 ? t('day_am') : t('day_pm');
@@ -2132,8 +2176,10 @@ function paintThemeSeg() {
   const pt = document.getElementById('pomoToggle');
   if (pt) pt.addEventListener('click', () => {
     pomoOn = !pomoOn;
-    if (pomoOn) pomoTimer = setInterval(pomoTick, 1000);
-    else clearInterval(pomoTimer);
+    if (pomoOn) {
+      pomoEndsAt = Date.now() + pomoLeft * 1000;
+      pomoTimer = setInterval(pomoTick, 1000);
+    } else clearInterval(pomoTimer);
     pomoPaint();
   });
   const pr = document.getElementById('pomoReset');
@@ -2141,6 +2187,7 @@ function paintThemeSeg() {
     pomoOn = false;
     clearInterval(pomoTimer);
     pomoLeft = pomoMode === 'focus' ? POMO_FOCUS : POMO_BREAK;
+    pomoEndsAt = Date.now() + pomoLeft * 1000;
     pomoPaint();
   });
   const pnb = document.getElementById('pomoNotifyBtn');
@@ -2721,7 +2768,7 @@ function paintPomoStats() {
 
   function renderCols() {
     hoursCol.innerHTML = HOURS.map((h) => {
-      const label = state.use24Hour ? (h < 10 ? '0' + h : h) : ((h % 12) || 12) + ' ' + dayPeriod(h);
+      const label = state.use24Hour ? localizeDigits(h < 10 ? '0' + h : h) : localizeDigits(((h % 12) || 12) + ' ' + dayPeriod(h));
       return '<button type="button" data-h="' + h + '" class="' + itemCls + '">' + label + '</button>';
     }).join('');
     minutesCol.innerHTML = MINUTES.map((m) => '<button type="button" data-m="' + m + '" class="' + itemCls + '">' + (m < 10 ? '0' + m : m) + '</button>').join('');
@@ -2804,6 +2851,8 @@ function closePomo() { const m = document.getElementById('pomoModal'); if (m) m.
     ['pomoModal', closePomo],
     ['sportsModal', closeSports],
     ['newsModal', closeNews],
+    ['tasksModal', closeTasks],
+    ['paletteModal', closePalette],
     ['aboutModal', closeAbout]
   ];
   pairs.forEach(([id, fn]) => {
@@ -2872,7 +2921,7 @@ function applyImportedPrefs(prefs) {
           if (typeof data.version === 'number' && data.version > 1) throw new Error('newer backup format');
           applyImportedPrefs(data.prefs);
           say(t('backup_imported') + (data.exportedAt || 'file'));
-        } catch (e) { say('Invalid backup file'); }
+        } catch (e) { say(t('backup_invalid')); }
         file.value = '';
       };
       rd.readAsText(f);
@@ -2920,12 +2969,14 @@ function applyImportedPrefs(prefs) {
 
 /* ---- Marquee for overflowing titles + favicon helper ---- */
 function paintMarquee() {
+  const rtl = document.documentElement.dir === 'rtl';
   document.querySelectorAll('.marq').forEach((el) => {
     el.classList.remove('marquee');
     el.style.removeProperty('--shift');
     el.style.textOverflow = '';
     if (el.scrollWidth > el.clientWidth + 4) {
-      el.style.setProperty('--shift', (-(el.scrollWidth - el.clientWidth)) + 'px');
+      // Overflow hides to the left in RTL, to the right in LTR — slide toward it.
+      el.style.setProperty('--shift', ((rtl ? 1 : -1) * (el.scrollWidth - el.clientWidth)) + 'px');
       el.style.textOverflow = 'clip';
       el.classList.add('marquee');
     }
@@ -3337,7 +3388,7 @@ function sportsStamp() {
   const now = new Date();
   const h = now.getHours();
   const hh = String(state.use24Hour ? h : (h % 12 || 12)).padStart(2, '0');
-  return t('updated_stamp') + hh + ':' + String(now.getMinutes()).padStart(2, '0')
+  return t('updated_stamp') + localizeDigits(hh + ':' + String(now.getMinutes()).padStart(2, '0'))
     + (state.use24Hour ? '' : ' ' + dayPeriod(h));
 }
 function repaintSports() {
@@ -3529,7 +3580,7 @@ async function refreshSportsHome() {
         const chipDay = d.toDateString() === today.toDateString() ? 0 : 1;
         const timeStr = d.toLocaleString(localeTag(), state.use24Hour ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', minute: '2-digit' });
         const label = document.getElementById('favMatchLabel');
-        if (label) label.textContent = best.fav.name + (isHome ? ' vs ' : ' at ') + opp + ' · ' + (chipDay === 0 ? t('fav_chip_today') : t('fav_chip_tomorrow')) + ' ' + timeStr;
+        if (label) label.textContent = best.fav.name + (isHome ? ' vs ' : ' at ') + opp + ' · ' + (chipDay === 0 ? t('fav_chip_today') : t('fav_chip_tomorrow')) + ' ' + localizeDigits(timeStr);
         chip.classList.remove('hidden');
         chip.classList.add('flex');
         chip.onclick = () => { state.sportsLeague = best.key; openSports(chipDay); };

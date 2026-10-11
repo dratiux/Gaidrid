@@ -17,7 +17,7 @@ What does this PR change, and why?
 
 ## Checklist
 
-- [ ] `node --check js/app.js` passes
+- [ ] `node --check` passes on all `js/` files
 - [ ] `npm run build` passes (rebuilds CSS + packs a self-checking zip)
 - [ ] Reloaded the unpacked extension and refreshed the tab
 - [ ] Verified manually in a new tab

@@ -10,6 +10,7 @@ en: {
   search_ph_videos: 'Search {engine} Videos...',
   reel_engine_title: 'Scroll or Drag up/down to change search engine',
   reel_mode_title: 'Scroll or Drag up/down to change mode',
+  mode_all: 'All', mode_news: 'News', mode_maps: 'Maps', mode_images: 'Images', mode_videos: 'Videos',
   greet_morning: 'Good Morning', greet_afternoon: 'Good Afternoon', greet_evening: 'Good Evening',
   top_sites: 'Frequently visited', top_sites_enable: 'Enable frequently visited',
   fav_chip_today: 'Today', fav_chip_tomorrow: 'Tomorrow',
@@ -60,7 +61,7 @@ en: {
   sec_backup: 'Backup', backup_title: 'Backup settings', backup_desc: 'Export or import a JSON backup',
   backup_export: 'Export', backup_import: 'Import',
   backup_done: 'Backup exported', backup_fail: 'Export failed',
-  backup_imported: 'Backup imported from ',
+  backup_imported: 'Backup imported from ', backup_invalid: 'Invalid backup file',
   notes_title: 'Quick notes', notes_ph: 'Jot something down...', notes_saved: 'Saved automatically', notes_saving: 'Saving...',
   ob_tag: 'One Tab. Everything.',
   ob_1: 'Press <b>/</b> anywhere to search',
@@ -111,6 +112,7 @@ en: {
   pal_act_side: 'Open side panel', pal_act_theme: 'Cycle theme (Light/Dark/Auto)',
   pal_no_results: 'No matches — Enter searches the web',
   sugg_search_for: ' - Search ', calc_hint: '',
+  ar_digits: '0123456789',
   crafted_by: 'CRAFTED WITH CARE BY DRATIUX',
   doc_title: 'New tab', version_label: 'Version',
   updated_stamp: 'Updated ',
@@ -125,6 +127,7 @@ ar: {
   search_ph_videos: 'ابحث في فيديو {engine}...',
   reel_engine_title: 'مرر أو اسحب لتغيير محرك البحث',
   reel_mode_title: 'مرر أو اسحب لتغيير نوع البحث',
+  mode_all: 'الكل', mode_news: 'أخبار', mode_maps: 'خرائط', mode_images: 'صور', mode_videos: 'فيديو',
   greet_morning: 'صباح الخير', greet_afternoon: 'مساء الخير', greet_evening: 'مساء الخير',
   top_sites: 'الأكثر زيارة', top_sites_enable: 'تفعيل الأكثر زيارة',
   fav_chip_today: 'اليوم', fav_chip_tomorrow: 'غداً',
@@ -175,7 +178,7 @@ ar: {
   sec_backup: 'النسخ الاحتياطي', backup_title: 'إعدادات النسخ', backup_desc: 'تصدير أو استيراد نسخة JSON',
   backup_export: 'تصدير', backup_import: 'استيراد',
   backup_done: 'تم تصدير النسخة', backup_fail: 'فشل التصدير',
-  backup_imported: 'تم الاستيراد من ',
+  backup_imported: 'تم الاستيراد من ', backup_invalid: 'ملف نسخة غير صالح',
   notes_title: 'ملاحظات سريعة', notes_ph: 'اكتب شيئاً...', notes_saved: 'يُحفظ تلقائياً', notes_saving: 'جارٍ الحفظ...',
   ob_tag: 'تبويب واحد. كل شيء.',
   ob_1: 'اضغط <b>/</b> في أي مكان للبحث',
@@ -227,6 +230,7 @@ ar: {
   pal_act_side: 'فتح اللوحة الجانبية', pal_act_theme: 'تبديل المظهر (فاتح/داكن/تلقائي)',
   pal_no_results: 'لا نتائج — Enter يبحث في الويب',
   sugg_search_for: ' - ابحث في ', calc_hint: '',
+  ar_digits: '٠١٢٣٤٥٦٧٨٩',
   crafted_by: 'صُنع بعناية بواسطة DRATIUX',
   doc_title: 'تبويب جديد', version_label: 'الإصدار',
   updated_stamp: 'آخر تحديث ',
@@ -329,6 +333,11 @@ function applyI18n() {
   try { if (typeof renderSectionRows === 'function') renderSectionRows(); } catch (e) {}
   try { if (typeof paintPomoStats === 'function') paintPomoStats(); } catch (e) {}
   try { if (typeof paintTasks === 'function') paintTasks(); } catch (e) {}
+  try { if (typeof paintMarquee === 'function') paintMarquee(); } catch (e) {}
+  try {
+    const bd = document.getElementById('activeModeBadge');
+    if (bd && typeof state !== 'undefined' && state.searchMode && state.searchMode !== 'all' && typeof modeName === 'function') bd.textContent = modeName(state.searchMode);
+  } catch (e) {}
   try {
     const si = document.getElementById('searchInput');
     if (si && typeof engineConfig !== 'undefined' && typeof state !== 'undefined') {

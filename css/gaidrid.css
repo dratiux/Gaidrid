@@ -54,20 +54,16 @@ textarea::selection {
   min-width: 0;
 }
 
-/* Picker hint arrows: smooth breathing float (direction-aware) */
-@keyframes hint-float-up {
-  0%, 100% { transform: translateY(2px); opacity: 0.45; }
+/* Picker hint arrows: one shared in-phase bob (up/down move together).
+   Centering is structural (full-width overlay + justify-center), never math:
+   translate-based centering breaks the moment a keyframe overrides transform,
+   and flips wrong in RTL. */
+.hint-up, .hint-down {
+  animation: hint-float 2.2s ease-in-out infinite;
+}
+@keyframes hint-float {
+  0%, 100% { transform: translateY(0); opacity: 0.45; }
   50% { transform: translateY(-2px); opacity: 1; }
-}
-@keyframes hint-float-down {
-  0%, 100% { transform: translateY(-2px); opacity: 0.45; }
-  50% { transform: translateY(2px); opacity: 1; }
-}
-.hint-up {
-  animation: hint-float-up 2.2s ease-in-out infinite;
-}
-.hint-down {
-  animation: hint-float-down 2.2s ease-in-out infinite;
 }
 
 /* Splash logo entrance */
