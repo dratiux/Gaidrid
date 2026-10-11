@@ -76,6 +76,10 @@ Gaidrid requests the minimum:
   in to RSS/news or shortcut favicons from arbitrary domains. Remote
   responses are rendered as data, never executed as code; Gaidrid follows the
   browser's remote-code policy and ships all of its own JavaScript locally.
+- **`tabs` + `bookmarks`** (optional, requested only the first time you open
+  the command palette with Ctrl+K) — to search open tabs and jump to a
+  bookmark from the palette. Titles and URLs never leave your browser; denying
+  only hides those two result groups.
 - **Host access to Open-Meteo** — only for the weather widget.
 
 Denying any optional permission simply disables that feature; the rest of

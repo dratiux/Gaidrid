@@ -41,6 +41,12 @@
 - **Side panel** — open the same workspace in the browser's side panel;
   search and shortcuts there open results in a new tab. Keyboard shortcut
   `Ctrl+Shift+K` (`Cmd+Shift+K` on Mac).
+- **Command palette** — `Ctrl+K` searches open tabs, bookmarks, actions and
+  history, with web search as fallback (tabs/bookmarks permission optional).
+- **Tasks + focus stats** — tiny todo list linked to the focus timer, with
+  daily/weekly counts and streaks, all local.
+- **Your language, your layout** — English or Arabic interface (RTL),
+  reorderable home sections, one-tap templates.
 - **Privacy-first** — fully offline bundle (Tailwind, FontAwesome, fonts
   vendored); sync storage with local fallback; no accounts, ads or trackers.
   See [PRIVACY.md](PRIVACY.md).

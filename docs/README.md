@@ -1,3 +1,12 @@
+# Gaidrid
+
+<p align="center">
+  <a href="https://github.com/dratiux/Gaidrid/actions/workflows/validate.yml"><img src="https://github.com/dratiux/Gaidrid/actions/workflows/validate.yml/badge.svg" alt="Validate"></a>
+  <a href="https://github.com/dratiux/Gaidrid/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
+</p>
+
+> Privacy-first MV3 new-tab page: multi-engine search, shortcuts, weather, sports, RSS news, and extras — offline-first, no accounts or trackers.
+
 ## Features
 
 - **Multi-engine search** — Google, YouTube, Bing, DuckDuckGo, Brave, Yahoo,
@@ -32,6 +41,12 @@
 - **Side panel** — open the same workspace in the browser's side panel;
   search and shortcuts there open results in a new tab. Keyboard shortcut
   `Ctrl+Shift+K` (`Cmd+Shift+K` on Mac).
+- **Command palette** — `Ctrl+K` searches open tabs, bookmarks, actions and
+  history, with web search as fallback (tabs/bookmarks permission optional).
+- **Tasks + focus stats** — tiny todo list linked to the focus timer, with
+  daily/weekly counts and streaks, all local.
+- **Your language, your layout** — English or Arabic interface (RTL),
+  reorderable home sections, one-tap templates.
 - **Privacy-first** — fully offline bundle (Tailwind, FontAwesome, fonts
   vendored); sync storage with local fallback; no accounts, ads or trackers.
   See [PRIVACY.md](PRIVACY.md).
@@ -85,6 +100,12 @@ listing description, and the hosted [`PRIVACY.md`](PRIVACY.md) URL.
 [MIT](LICENSE) © 2026 dratiux. Third-party components keep their own
 licenses — see [NOTICE](NOTICE).
 
-## Credits
+---
 
-Crafted with care by **dratiux**.
+<p align="center">
+  <br>
+  <sub>CRAFTED WITH CARE BY DRATIUX</sub>
+  <br><br>
+  <a href="https://paypal.me/dratiux"><img src="https://img.shields.io/badge/PayPal-F2F2F2?logo=paypal&logoColor=003087&style=flat" alt="PayPal"></a>
+  <a href="https://ko-fi.com/dratiux"><img src="https://img.shields.io/badge/Ko--fi-F2F2F2?logo=ko-fi&logoColor=FF5E5B&style=flat" alt="Ko-fi"></a>
+</p>

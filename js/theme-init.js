@@ -17,6 +17,13 @@
     if (p && typeof p === 'object' && p.accent) {
       document.documentElement.setAttribute('data-accent', String(p.accent));
     }
+    // Language + direction before first paint (auto follows the browser).
+    try {
+      var lang = (p && p.lang && p.lang !== 'auto') ? p.lang
+        : (String(navigator.language || 'en').toLowerCase().indexOf('ar') === 0 ? 'ar' : 'en');
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    } catch (e2) {}
     if (!p) {
       // First run: follow the system preference instead of the hardcoded markup default.
       if (window.matchMedia) document.documentElement.classList.toggle('dark', window.matchMedia('(prefers-color-scheme: dark)').matches);

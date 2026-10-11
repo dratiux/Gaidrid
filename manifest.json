@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Gaidrid",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "homepage_url": "https://dratiux.github.io/Gaidrid/",
   "description": "Calm new-tab workspace: multi-engine search, clock, weather, shortcuts, focus timer, notes, sports scores and RSS news.",
   "icons": {
@@ -20,7 +20,7 @@
     "service_worker": "js/background.js"
   },
   "permissions": ["storage"],
-  "optional_permissions": ["topSites", "notifications"],
+  "optional_permissions": ["topSites", "notifications", "tabs", "bookmarks"],
   "commands": {
     "open-side-panel": {
       "suggested_key": {

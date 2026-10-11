@@ -45,6 +45,15 @@ const state = {
             newsRead: [],
             newsFilter: 'all',
             newsFontStep: 0,
+            lang: 'auto',
+            sectionOrder: ['clock', 'search', 'topsites'],
+            showClock: true,
+            showSearch: true,
+            showQuote: true,
+            tasks: [],
+            activeTask: null,
+            pomoStats: {},
+            palettePerm: 'unknown',
             suggestions: [
                 'edx pickup',
                 'google redesign search page',
@@ -241,7 +250,7 @@ const state = {
                 const geoData = await geoRes.json();
 
                 if (!geoData.results || geoData.results.length === 0) {
-                    if (weatherCondition) weatherCondition.textContent = 'City Not Found,';
+                    if (weatherCondition) weatherCondition.textContent = t('weather_no_city');
                     return;
                 }
 
@@ -288,7 +297,7 @@ const state = {
             }
 
             if (weatherCondition) {
-                weatherCondition.textContent = `${info.label},`;
+                weatherCondition.textContent = `${wxLabel(info.label)},`;
             }
 
             if (weatherTemp) {
@@ -369,7 +378,7 @@ const state = {
             
             let timeStr = '';
             if (!state.use24Hour) {
-                const ampm = hours >= 12 ? ' PM' : ' AM';
+                const ampm = ' ' + dayPeriod(hours);
                 hours = hours % 12 || 12;
                 timeStr = `${String(hours).padStart(2, '0')}:${minutes}${state.showSeconds ? ':' + seconds : ''}${ampm}`;
             } else {
@@ -382,7 +391,7 @@ const state = {
             if (state.showDate) {
                 digitalDate.classList.remove('hidden');
                 const options = { weekday: 'long', day: 'numeric', month: 'short' };
-                digitalDate.textContent = now.toLocaleDateString('en-US', options);
+                digitalDate.textContent = now.toLocaleDateString(localeTag(), options);
             } else {
                 digitalDate.classList.add('hidden');
             }
@@ -390,10 +399,10 @@ const state = {
             // Contextual Greeting
             if (state.showGreeting) {
                 digitalGreeting.classList.remove('hidden');
-                let greeting = 'Good Morning';
+                let greeting = t('greet_morning');
                 const currentHour = now.getHours();
-                if (currentHour >= 12 && currentHour < 17) greeting = 'Good Afternoon';
-                else if (currentHour >= 17 || currentHour < 5) greeting = 'Good Evening';
+                if (currentHour >= 12 && currentHour < 17) greeting = t('greet_afternoon');
+                else if (currentHour >= 17 || currentHour < 5) greeting = t('greet_evening');
                 const nm = (state.userName || '').trim();
                 digitalGreeting.textContent = nm ? greeting + ', ' + nm : greeting;
             } else {
@@ -422,6 +431,12 @@ const state = {
 
         showGreetingBtn.addEventListener('click', () => {
             state.showGreeting = !state.showGreeting;
+            syncSettingsUI();
+        });
+
+        const showQuoteBtn = document.getElementById('showQuoteBtn');
+        if (showQuoteBtn) showQuoteBtn.addEventListener('click', () => {
+            state.showQuote = !state.showQuote;
             syncSettingsUI();
         });
 
@@ -523,16 +538,17 @@ const state = {
 
         function updateInputPlaceholder() {
             const engineName = engineConfig[state.searchEngine]?.name || 'Google';
+            const fill = (s) => s.replace('{engine}', engineName);
             if (state.searchMode === 'all') {
-                searchInput.placeholder = `Search ${engineName} or type a URL`;
+                searchInput.placeholder = fill(t('search_ph'));
             } else if (state.searchMode === 'news') {
-                searchInput.placeholder = `Search ${engineName} News...`;
+                searchInput.placeholder = fill(t('search_ph_news'));
             } else if (state.searchMode === 'maps') {
-                searchInput.placeholder = `Search ${engineName} Maps...`;
+                searchInput.placeholder = fill(t('search_ph_maps'));
             } else if (state.searchMode === 'images') {
-                searchInput.placeholder = `Search ${engineName} Images...`;
+                searchInput.placeholder = fill(t('search_ph_images'));
             } else if (state.searchMode === 'videos') {
-                searchInput.placeholder = `Search ${engineName} Videos...`;
+                searchInput.placeholder = fill(t('search_ph_videos'));
             }
         }
 
@@ -576,6 +592,11 @@ const state = {
         }
 
         updateEngineReelArrows();
+
+        // Exposed for top-level features (command palette) living outside this scope.
+        window.GaidridEngineName = function () {
+            try { return (engineConfig[state.searchEngine] || {}).name || 'Google'; } catch (e) { return 'Google'; }
+        };
 
 
         // Quantized wheel: one detent = exactly one item (no more double-skip)
@@ -690,7 +711,7 @@ const state = {
                 activeModeBadge.classList.add('hidden');
             } else {
                 activeModeBadge.textContent = mode;
-                activeModeBadge.className = `text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full mr-1 transition-all ${modeColors[mode].bg} ${modeColors[mode].text}`;
+                activeModeBadge.className = `text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full me-1 transition-all ${modeColors[mode].bg} ${modeColors[mode].text}`;
                 activeModeBadge.classList.remove('hidden');
             }
 
@@ -873,7 +894,7 @@ const state = {
             const engineName = suggEngineName();
             suggestionsList.innerHTML = displayList.map(function (item) {
                 const isCalc = item.indexOf('= ') === 0;
-                const cleaned = isCalc ? item : item.replace(' - Search ' + engineName, '');
+                const cleaned = isCalc ? item : item.replace(t('sugg_search_for') + engineName, '');
                 const isSearchRow = !isCalc && cleaned !== item;
                 const act = isCalc ? 'calc' : (isSearchRow ? 'search' : (isUrlLike(cleaned) ? 'url' : 'search'));
                 return '<div class="suggestion-item px-5 py-2.5 hover:bg-gray-50 dark:hover:bg-white/10 flex items-center gap-3 cursor-pointer text-sm text-gray-700 dark:text-gray-200" data-act="' + act + '">'
@@ -897,7 +918,7 @@ const state = {
                         searchInput.focus();
                         return;
                     }
-                    const cleaned = raw.replace(' - Search ' + engineName, '');
+                    const cleaned = raw.replace(t('sugg_search_for') + engineName, '');
                     if (act === 'search' && isUrlLike(cleaned)) forceSearchOnce = true;
                     searchInput.value = cleaned;
                     searchForm.dispatchEvent(new Event('submit'));
@@ -908,7 +929,7 @@ const state = {
         // Rows offered when the query itself looks like a URL: visit it, or search for it.
         function urlSuggestionRows(query) {
             if (!isUrlLike(query)) return [];
-            return [query, query + ' - Search ' + suggEngineName()];
+            return [query, query + t('sugg_search_for') + suggEngineName()];
         }
 
         // Engine bang cheat-sheet: "!yt" rows fill the input instead of searching.
@@ -963,7 +984,7 @@ const state = {
                 return baseKeys.indexOf(item.toLowerCase()) === -1;
             }).slice(0, 7);
             const list = base.concat(combined);
-            if (!list.length) list.push(query + ' - Search ' + suggEngineName());
+            if (!list.length) list.push(query + t('sugg_search_for') + suggEngineName());
             renderSuggestionItems(list.slice(0, 8));
             refreshLiveSuggestions(query);
         }
@@ -1022,13 +1043,17 @@ const state = {
             }
         });
 
+        // Drawer hides toward its edge: right in LTR, left in RTL.
+        function drawerHiddenCls() {
+            try { return document.documentElement.dir === 'rtl' ? '-translate-x-full' : 'translate-x-full'; } catch (e) { return 'translate-x-full'; }
+        }
         function openDrawer() {
-            if (appsDrawer) appsDrawer.classList.remove('translate-x-full');
+            if (appsDrawer) appsDrawer.classList.remove('translate-x-full', '-translate-x-full');
             if (appsOverlay) appsOverlay.classList.remove('opacity-0', 'pointer-events-none');
         }
 
         function closeDrawer() {
-            if (appsDrawer) appsDrawer.classList.add('translate-x-full');
+            if (appsDrawer) appsDrawer.classList.add(drawerHiddenCls());
             if (appsOverlay) appsOverlay.classList.add('opacity-0', 'pointer-events-none');
         }
 
@@ -1049,11 +1074,11 @@ const state = {
                 appCard.setAttribute('data-index', index);
 
                 appCard.innerHTML = `
-                    <div class="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 transition-all">
+                    <div class="absolute top-1 end-1 z-10 opacity-0 group-hover:opacity-100 transition-all">
                         <button class="card-menu-btn w-6 h-6 rounded-full bg-white/95 dark:bg-[#232c38]/95 border border-gray-200/70 dark:border-white/10 shadow-md flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-all" title="Options">
                             <i class="fa-solid fa-ellipsis-vertical text-[10px]"></i>
                         </button>
-                        <div class="card-menu hidden absolute right-0 top-7 w-28 bg-white/95 dark:bg-[#232c38]/95 border border-gray-200/70 dark:border-white/10 rounded-xl shadow-float overflow-hidden py-1">
+                        <div class="card-menu hidden absolute end-0 top-7 w-28 bg-white/95 dark:bg-[#232c38]/95 border border-gray-200/70 dark:border-white/10 rounded-xl shadow-float overflow-hidden py-1">
                             <button data-act="edit" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
                                 <i class="fa-solid fa-pen text-[9px] text-google-blue"></i>Edit
                             </button>
@@ -1177,8 +1202,8 @@ const state = {
             editingAppId = (app && app.id) || null;
             const titleEl = document.getElementById('addAppTitle');
             const subEl = document.getElementById('addAppSubmit');
-            if (titleEl) titleEl.textContent = editingAppId ? 'Edit shortcut' : 'Add shortcut';
-            if (subEl) subEl.textContent = editingAppId ? 'Save' : 'Add shortcut';
+            if (titleEl) titleEl.textContent = editingAppId ? t('edit_shortcut') : t('add_shortcut');
+            if (subEl) subEl.textContent = editingAppId ? t('save') : t('add_shortcut');
             appTitleInput.value = app ? app.title : '';
             appUrlInput.value = app ? app.url : '';
             const hidden = document.getElementById('appIconInput');
@@ -1233,7 +1258,7 @@ const state = {
 
         function openVoiceModal() {
             voiceModal.classList.remove('opacity-0', 'pointer-events-none');
-            voiceStatusText.textContent = "Listening...";
+            voiceStatusText.textContent = t('voice_listening');
 
             // Simulate Web Speech Recognition
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -1249,7 +1274,7 @@ const state = {
             } else {
                 // Fallback simulation delay
                 setTimeout(() => {
-                    voiceStatusText.textContent = "Try saying 'Google News'";
+                    voiceStatusText.textContent = t('voice_try');
                 }, 2000);
             }
         }
@@ -1293,11 +1318,16 @@ const state = {
         unitC.addEventListener('click', () => setTemperatureUnit(true));
         unitF.addEventListener('click', () => setTemperatureUnit(false));
 
-        // Keyboard Shortcut: Focus search input (rebindable binding + quick slash key)
+        // Keyboard shortcuts: "/" focuses search, Ctrl+K opens the command palette
         document.addEventListener('keydown', (e) => {
-            if ((e.key === '/' || (e.ctrlKey && e.key === 'k')) && document.activeElement !== searchInput && !gaidridTyping() && !gaidridModalOpen()) {
+            if (e.key === '/' && document.activeElement !== searchInput && !gaidridTyping() && !gaidridModalOpen()) {
                 e.preventDefault();
                 searchInput.focus();
+                return;
+            }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K') && !gaidridTyping() && !gaidridModalOpen()) {
+                e.preventDefault();
+                if (typeof openPalette === 'function') openPalette();
             }
         });
 
@@ -1323,6 +1353,8 @@ const state = {
     'history', 'showTopSites', 'themeMode', 'accent', 'autoNight', 'autoNightStart', 'autoNightEnd',
     'sportsLeague', 'sportsFav', 'sportsAuto', 'sportsShowFinished', 'pomoNotify',
     'newsFeeds', 'newsAuto', 'newsFilter', 'newsFontStep',
+    'lang', 'sectionOrder', 'showClock', 'showSearch', 'showQuote',
+    'tasks', 'activeTask', 'pomoStats', 'palettePerm',
     'searchEngine', 'searchMode', 'apps', 'dark'];
   const mem = {
     get: (k) => new Promise((res) => {
@@ -1374,6 +1406,10 @@ const state = {
       pomoNotify: state.pomoNotify,
       newsFeeds: state.newsFeeds, newsAuto: state.newsAuto,
       newsRead: state.newsRead, newsFilter: state.newsFilter, newsFontStep: state.newsFontStep,
+      lang: state.lang,
+      sectionOrder: state.sectionOrder, showClock: state.showClock, showSearch: state.showSearch, showQuote: state.showQuote,
+      tasks: state.tasks, activeTask: state.activeTask, pomoStats: state.pomoStats,
+      palettePerm: state.palettePerm,
       searchEngine: state.searchEngine, searchMode: state.searchMode, apps: state.apps,
       dark: document.documentElement.classList.contains('dark')
     };
@@ -1387,7 +1423,7 @@ const state = {
   window.GaidridCollect = collect;
 
   mem.get(KEY).then((p) => {
-    if (!p) { if (typeof applyTheme === 'function') applyTheme(); if (typeof showOnboarding === 'function') showOnboarding(); return; }
+    if (!p) { if (typeof applyTheme === 'function') applyTheme(); if (typeof showOnboarding === 'function') showOnboarding(); if (typeof applyI18n === 'function') applyI18n(); return; }
     try {
       const live = { tempC: state.tempC, weatherCode: state.weatherCode, isDay: state.isDay, suggestions: state.suggestions };
       Object.assign(state, p, live);
@@ -1405,14 +1441,15 @@ const state = {
       if (typeof fetchLiveWeather === 'function') fetchLiveWeather(state.weatherLocation || 'Cairo');
       refreshSportsHome();
       refreshNewsHome();
-      try { if (searchInput) searchInput.focus({ preventScroll: true }); } catch (e) {}
+      if (typeof applyI18n === 'function') applyI18n();
     } catch (e) { console.warn('Gaidrid restore failed:', e); }
   });
 })();
 
 /* ---- Gaidrid P0/P1: settings sync, keyboard, geo weather, locale wiring ---- */
 function paintToggle(btn, circle, on) {
-  circle.style.transform = on ? 'translateX(24px)' : 'translateX(0px)';
+  const rtl = document.documentElement.dir === 'rtl';
+  circle.style.transform = on ? (rtl ? 'translateX(-24px)' : 'translateX(24px)') : 'translateX(0px)';
   btn.className = on ? 'w-12 h-6 bg-google-blue rounded-full p-1 transition-colors relative shrink-0'
     : 'w-12 h-6 bg-gray-200 dark:bg-white/10 rounded-full p-1 transition-colors relative shrink-0';
 }
@@ -1439,7 +1476,7 @@ function fmtNightTime(hhmm) {
   const h = parseInt(p[0], 10) || 0;
   const m = (p[1] || '00').slice(-2).padStart(2, '0');
   if (state.use24Hour) return (h < 10 ? '0' + h : h) + ':' + m;
-  return (h % 12 || 12) + ':' + m + (h >= 12 ? ' PM' : ' AM');
+  return (h % 12 || 12) + ':' + m + ' ' + dayPeriod(h);
 }
 
 function updateTimeButtons() {
@@ -1457,7 +1494,7 @@ function paintTimePicker() {
   const h = parseInt(p[0], 10);
   const m = parseInt(p[1], 10);
   const title = document.getElementById('timePickerTitle');
-  if (title) title.textContent = timePickTarget === 'autoNightEnd' ? 'Ends' : 'Starts';
+  if (title) title.textContent = timePickTarget === 'autoNightEnd' ? t('tp_ends') : t('tp_starts');
   const preview = document.getElementById('timePickerPreview');
   if (preview) preview.textContent = fmtNightTime(hhmm);
   document.querySelectorAll('#timePickerHours [data-h]').forEach((b) => b.classList.toggle('time-pick-on', +b.getAttribute('data-h') === h));
@@ -1497,6 +1534,9 @@ function syncSettingsUI() {
   if (typeof setTemperatureUnit === 'function') setTemperatureUnit(!!state.isCelsius);
   paintThemeSeg();
   paintAccents();
+  const qsb = document.getElementById('showQuoteBtn');
+  if (qsb) paintToggle(qsb, document.getElementById('quoteToggleCircle'), state.showQuote !== false);
+  renderSectionRows();
   const anb = document.getElementById('autoNightBtn');
   if (anb) paintToggle(anb, document.getElementById('autoNightCircle'), !!state.autoNight);
   const pnb = document.getElementById('pomoNotifyBtn');
@@ -1521,7 +1561,7 @@ function fetchByCoords(latitude, longitude) {
         state.isDay = typeof current.is_day !== 'undefined' ? current.is_day : 1;
         const wLoc = document.getElementById('weatherLocation');
         if (wLoc) {
-          wLoc.textContent = 'Current location •';
+          wLoc.textContent = t('weather_cur_loc');
           wLoc.classList.remove('hidden');
         }
         updateWeatherUI();
@@ -1583,12 +1623,18 @@ function fetchGeoWeather(userInitiated) {
     suggestionsBox.classList.add('hidden');
     if (typeof citySuggestionsBox !== 'undefined' && citySuggestionsBox) citySuggestionsBox.classList.add('hidden');
     suggActive = -1;
-    // Esc closes the time picker first, before the settings panel itself.
+    // Esc closes custom dropdowns first, then the time picker, then everything else.
+    if (typeof closeDropdowns === 'function' && closeDropdowns()) {
+      if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+      return;
+    }
     if (closeTimePicker()) {
       if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
       return;
     }
     closeDrawer(); closeSettings(); closeAddAppModal(); closeVoiceModal(); closeAbout(); closeNotes(); hideOnboarding(); closePomo(); closeSports(); closeNews(); closeCardMenus();
+    if (typeof closeTasks === 'function') closeTasks();
+    if (typeof closePalette === 'function') closePalette();
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   });
 
@@ -1615,7 +1661,7 @@ function fetchGeoWeather(userInitiated) {
         suggestionsBox.classList.add('hidden');
         return;
       }
-      const cleaned = raw.replace(' - Search ' + suggEngineName(), '');
+      const cleaned = raw.replace(t('sugg_search_for') + suggEngineName(), '');
       if (act === 'search' && isUrlLike(cleaned)) forceSearchOnce = true;
       searchInput.value = cleaned;
       searchForm.dispatchEvent(new Event('submit'));
@@ -1852,7 +1898,7 @@ function hideOnboarding() { const m = document.getElementById('onboardModal'); i
     if (state.notes) na.value = state.notes;
     na.addEventListener('input', () => {
       state.notes = na.value;
-      if (ns) ns.textContent = 'Saving...';
+      if (ns) ns.textContent = t('notes_saving');
       clearTimeout(notesT);
       notesT = setTimeout(() => { if (window.GaidridSave) window.GaidridSave(); if (ns) ns.textContent = 'Saved automatically'; }, 600);
     });
@@ -1914,9 +1960,9 @@ function tryCalc(q) {
       return neg ? -v : v;
     }
     function parseP() {
-      const t = toks[p++];
-      if (t === '(') { const v = parseE(); if (toks[p++] !== ')') throw new Error('paren'); return v; }
-      const n = parseFloat(t);
+      const tok = toks[p++];
+      if (tok === '(') { const v = parseE(); if (toks[p++] !== ')') throw new Error('paren'); return v; }
+      const n = parseFloat(tok);
       if (isNaN(n)) throw new Error('num');
       return n;
     }
@@ -1938,20 +1984,22 @@ let pomoLeft = POMO_FOCUS;
 let pomoOn = false;
 let pomoTimer = null;
 function pomoPaint() {
-  const t = document.getElementById('pomoTime');
+  const timeEl = document.getElementById('pomoTime');
   const l = document.getElementById('pomoLabel');
   const ic = document.getElementById('pomoToggleIcon');
   const tb = document.getElementById('pomoToggle');
-  if (t) t.textContent = String(Math.floor(pomoLeft / 60)).padStart(2, '0') + ':' + String(pomoLeft % 60).padStart(2, '0');
-  if (l) l.textContent = pomoMode === 'focus' ? 'Focus' : 'Break';
+  if (timeEl) timeEl.textContent = String(Math.floor(pomoLeft / 60)).padStart(2, '0') + ':' + String(pomoLeft % 60).padStart(2, '0');
+  if (l) l.textContent = pomoMode === 'focus' ? t('pomo_focus') : t('pomo_break');
   if (ic) ic.className = pomoOn ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]';
-  if (tb) tb.title = pomoOn ? 'Pause timer' : 'Start focus timer';
+  if (tb) tb.title = pomoOn ? t('pomo_pause') : t('pomo_start');
 }
 function pomoTick() {
   if (pomoLeft > 0) { pomoLeft--; pomoPaint(); return; }
+  const was = pomoMode;
   pomoMode = pomoMode === 'focus' ? 'break' : 'focus';
   pomoLeft = pomoMode === 'focus' ? POMO_FOCUS : POMO_BREAK;
   pomoPaint();
+  if (was === 'focus') recordPomoSession();
   pomoNotifyDone(pomoMode === 'break' ? 'Focus done — take a break' : 'Break over — back to focus');
 }
 /* Timer-end notification: optional permission, asked once at toggle time. */
@@ -1996,12 +2044,14 @@ const QUOTES = [
   'Make today load fast.',
   'Less, but better.'
 ];
-(function paintQuote() {
+function paintQuote() {
   const el = document.getElementById('quoteText');
   if (!el) return;
   const day = Math.floor(Date.now() / 86400000);
-  el.textContent = '\u201C' + QUOTES[day % QUOTES.length] + '\u201D';
-})();
+  const arr = (typeof gaidridLang === 'function' && gaidridLang() === 'ar') ? QUOTES_AR : QUOTES;
+  el.textContent = '\u201C' + arr[day % arr.length] + '\u201D';
+}
+paintQuote();
 
 /* ---- Theme modes: light / dark / auto ---- */
 function syncDinoTheme(dark) {
@@ -2034,13 +2084,17 @@ function observeDinoMoon() {
     new MutationObserver(readDinoMoon).observe(d.documentElement, { attributes: true, attributeFilter: ['class'] });
   } catch (e) {}
 }
+// Day period word, localized via the day_am / day_pm dictionary keys.
+function dayPeriod(h) {
+  if (typeof gaidridLang === 'function' && gaidridLang() === 'ar') return h < 12 ? t('day_am') : t('day_pm');
+  return h < 12 ? 'AM' : 'PM';
+}
 // Night window: true when now is inside [start, end) (wraps past midnight).
-function nightNow(s, e) {
-  if (!s || !e) return false;
+function nightNow(s, e) {  if (!s || !e) return false;
   const now = new Date();
   const cur = now.getHours() * 60 + now.getMinutes();
-  const t = (x) => { const p = String(x).split(':'); return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0); };
-  const a = t(s), b = t(e);
+  const toMin = (x) => { const p = String(x).split(':'); return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0); };
+  const a = toMin(s), b = toMin(e);
   return a <= b ? (cur >= a && cur < b) : (cur >= a || cur < b);
 }
 function applyTheme() {
@@ -2121,6 +2175,60 @@ function paintThemeSeg() {
   seg('themeLight', 'light');
   seg('themeDark', 'dark');
   seg('themeAuto', 'auto');
+function setLang(v) {
+  const value = v || 'auto';
+  if (state.lang === value) return;
+  state.lang = value;
+  renderLangOptions();
+  applyI18n();
+  if (typeof syncSettingsUI === 'function') syncSettingsUI();
+  if (typeof repaintSports === 'function') repaintSports();
+  if (typeof renderNewsList === 'function' && newsOpen()) renderNewsList();
+  if (typeof refreshSportsHome === 'function') refreshSportsHome();
+  if (typeof fetchLiveWeather === 'function') fetchLiveWeather(state.weatherLocation || 'Cairo');
+  if (window.repaintTimePicker) window.repaintTimePicker();
+  if (window.GaidridSave) window.GaidridSave();
+}
+  const langField = document.getElementById('langField');
+  const langPanel = document.getElementById('langPanel');
+  if (langField && langPanel) {
+    langField.addEventListener('click', (e) => {
+      e.stopPropagation();
+      renderLangOptions();
+      const opening = langPanel.classList.contains('hidden');
+      closeDropdowns();
+      if (opening) langPanel.classList.remove('hidden');
+    });
+    langPanel.addEventListener('click', (e) => {
+      const b = e.target && e.target.closest ? e.target.closest('[data-langopt]') : null;
+      if (!b) return;
+      setLang(b.getAttribute('data-langopt') || 'auto');
+      closeDropdowns();
+    });
+  }
+  const taskField = document.getElementById('taskField');
+  const taskPanel = document.getElementById('taskPanel');
+  if (taskField && taskPanel) {
+    taskField.addEventListener('click', (e) => {
+      e.stopPropagation();
+      paintPomoTaskSelect();
+      const opening = taskPanel.classList.contains('hidden');
+      closeDropdowns();
+      if (opening) taskPanel.classList.remove('hidden');
+    });
+    taskPanel.addEventListener('click', (e) => {
+      const b = e.target && e.target.closest ? e.target.closest('[data-taskopt]') : null;
+      if (!b) return;
+      state.activeTask = b.getAttribute('data-taskopt') || null;
+      paintPomoTaskSelect();
+      closeDropdowns();
+      if (window.GaidridSave) window.GaidridSave();
+    });
+  }
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.closest && (e.target.closest('#langField') || e.target.closest('#taskField'))) return;
+    closeDropdowns();
+  });
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (state.themeMode === 'auto') applyTheme(); });
   }
@@ -2149,6 +2257,451 @@ function paintThemeSeg() {
   });
 })();
 
+/* ---- Home personalization: sections + templates ---- */
+// Top-level HTML escaper (the search IIFE has its own scoped copy).
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function paintSections() {
+  const order = Array.isArray(state.sectionOrder) ? state.sectionOrder : ['clock', 'search', 'topsites'];
+  const map = { clock: document.getElementById('clockBlock'), search: document.getElementById('searchWrap'), topsites: document.getElementById('topSitesWrap') };
+  order.forEach((id, i) => { const el = map[id]; if (el) el.style.order = i; });
+  if (map.clock) map.clock.classList.toggle('hidden', state.showClock === false);
+  if (map.search) map.search.classList.toggle('hidden', state.showSearch === false);
+  const q = document.getElementById('quoteText');
+  if (q) q.classList.toggle('hidden', state.showQuote === false);
+}
+function renderSectionRows() {
+  const box = document.getElementById('sectionRows');
+  if (!box) { paintSections(); return; }
+  let order = Array.isArray(state.sectionOrder) ? state.sectionOrder.filter((id) => id === 'clock' || id === 'search' || id === 'topsites') : [];
+  ['clock', 'search', 'topsites'].forEach((id) => { if (order.indexOf(id) === -1) order.push(id); });
+  state.sectionOrder = order;
+  const names = { clock: t('clock_show'), search: t('hs_search'), topsites: t('topsites_show') };
+  const eyeOf = (id) => {
+    const on = id === 'clock' ? state.showClock !== false : id === 'search' ? state.showSearch !== false : state.showTopSites !== false;
+    return '<button type="button" data-seceye="' + id + '" aria-label="' + escHtml(t(on ? 'hide_section' : 'show_section')) + '" class="w-6 h-6 rounded-full flex items-center justify-center transition-colors ' + (on ? 'text-google-blue' : 'text-gray-300 dark:text-gray-600 hover:text-gray-500') + '"><i class="fa-solid fa-eye' + (on ? '' : '-slash') + ' text-[10px]"></i></button>';
+  };
+  box.innerHTML = order.map((id) =>
+    '<div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/[0.06] border border-gray-100 dark:border-white/10">'
+    + '<span class="text-xs font-medium text-gray-700 dark:text-gray-200 truncate flex-1">' + escHtml(names[id] || id) + '</span>'
+    + '<span class="flex items-center gap-1 shrink-0">'
+    + '<button type="button" data-secmove="' + id + ':-1" aria-label="' + escHtml(t('move_up')) + '" class="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"><i class="fa-solid fa-chevron-up text-[10px]"></i></button>'
+    + '<button type="button" data-secmove="' + id + ':1" aria-label="' + escHtml(t('move_down')) + '" class="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>'
+    + eyeOf(id) + '</span></div>'
+  ).join('');
+  paintSections();
+}
+/* One-tap workspace presets. Pure map + thin applier (tested in logic-check). */
+const TEMPLATES = {
+  full: { themeMode: 'auto', accent: 'blue', showSeconds: true, showTopSites: true, showQuote: true, showClock: true, showSearch: true, sectionOrder: ['clock', 'search', 'topsites'] },
+  minimal: { themeMode: 'auto', accent: 'navy', showSeconds: false, showTopSites: false, showQuote: false, showClock: true, showSearch: true, sectionOrder: ['clock', 'search', 'topsites'] },
+  focus: { themeMode: 'dark', accent: 'teal', showSeconds: false, showTopSites: false, showQuote: false, showClock: true, showSearch: false, sectionOrder: ['clock', 'search', 'topsites'] }
+};
+function applyTemplate(name) {
+  const tpl = TEMPLATES[name];
+  if (!tpl) return false;
+  Object.keys(tpl).forEach((k) => { state[k] = tpl[k]; });
+  if (typeof applyTheme === 'function') applyTheme();
+  if (typeof paintThemeSeg === 'function') paintThemeSeg();
+  if (typeof syncSettingsUI === 'function') syncSettingsUI();
+  if (typeof renderTopSites === 'function') renderTopSites();
+  if (window.GaidridSave) window.GaidridSave();
+  return true;
+}
+(function gaidridHome() {
+  const box = document.getElementById('sectionRows');
+  if (box) box.addEventListener('click', (e) => {
+    const mv = e.target && e.target.closest ? e.target.closest('[data-secmove]') : null;
+    if (mv && box.contains(mv)) {
+      const parts = (mv.getAttribute('data-secmove') || '').split(':');
+      const order = (state.sectionOrder || []).slice();
+      const i = order.indexOf(parts[0]);
+      const j = i + parseInt(parts[1], 10);
+      if (i < 0 || j < 0 || j >= order.length) return;
+      order.splice(i, 1);
+      order.splice(j, 0, parts[0]);
+      state.sectionOrder = order;
+      if (typeof syncSettingsUI === 'function') syncSettingsUI();
+      if (window.GaidridSave) window.GaidridSave();
+      return;
+    }
+    const eye = e.target && e.target.closest ? e.target.closest('[data-seceye]') : null;
+    if (eye && box.contains(eye)) {
+      const id = eye.getAttribute('data-seceye');
+      if (id === 'clock') state.showClock = !state.showClock;
+      else if (id === 'search') state.showSearch = !state.showSearch;
+      else if (id === 'topsites') state.showTopSites = !state.showTopSites;
+      if (typeof syncSettingsUI === 'function') syncSettingsUI();
+      if (id === 'topsites' && typeof renderTopSites === 'function') renderTopSites();
+      if (window.GaidridSave) window.GaidridSave();
+    }
+  });
+  [['tplFull', 'full'], ['tplMinimal', 'minimal'], ['tplFocus', 'focus']].forEach(([id, name]) => {
+    const b = document.getElementById(id);
+    if (b) b.addEventListener('click', () => applyTemplate(name));
+  });
+  renderSectionRows();
+})();
+
+/* ---- Command palette (Ctrl+K): actions, tabs, bookmarks, history ----
+   Tabs/bookmarks use optional permissions; without them the palette still
+   offers actions, history and web search. */
+let palActive = -1;
+let palRows = [];
+let palSeq = 0;
+function paletteOpen() {
+  const m = document.getElementById('paletteModal');
+  return !!(m && !m.classList.contains('opacity-0'));
+}
+function openPalette() {
+  const m = document.getElementById('paletteModal');
+  const input = document.getElementById('paletteInput');
+  if (!m || !input) return;
+  m.classList.remove('opacity-0', 'pointer-events-none');
+  input.value = '';
+  renderPalette('');
+  setTimeout(() => { try { input.focus(); } catch (e) {} }, 30);
+  ensurePalettePerm();
+}
+function closePalette() {
+  const m = document.getElementById('paletteModal');
+  if (m) m.classList.add('opacity-0', 'pointer-events-none');
+}
+function clickBtn(id) {
+  const b = document.getElementById(id);
+  if (b) b.click();
+}
+function cycleTheme() {
+  const order = ['light', 'dark', 'auto'];
+  const cur = state.themeMode || 'auto';
+  state.themeMode = order[(order.indexOf(cur) + 1) % order.length];
+  if (typeof applyTheme === 'function') applyTheme();
+  if (typeof paintThemeSeg === 'function') paintThemeSeg();
+  if (window.GaidridSave) window.GaidridSave();
+}
+function openSidePanelNow() {
+  try {
+    if (typeof chrome === 'undefined' || !chrome.sidePanel || !chrome.sidePanel.open) return false;
+    if (chrome.windows && chrome.windows.getCurrent) {
+      chrome.windows.getCurrent({}, (w) => {
+        if (chrome.runtime && chrome.runtime.lastError) return;
+        try { chrome.sidePanel.open({ windowId: w.id }).catch(() => {}); } catch (e) {}
+      });
+    } else {
+      try { chrome.sidePanel.open({}).catch(() => {}); } catch (e) {}
+    }
+    return true;
+  } catch (e) { return false; }
+}
+function paletteActions() {
+  return [
+    { kind: 'action', icon: 'fa-solid fa-gear', label: t('pal_act_settings'), run: () => clickBtn('settingsBtn') },
+    { kind: 'action', icon: 'fa-solid fa-trophy', label: t('pal_act_sports'), run: () => clickBtn('sportsBtn') },
+    { kind: 'action', icon: 'fa-solid fa-newspaper', label: t('pal_act_news'), run: () => clickBtn('newsBtn') },
+    { kind: 'action', icon: 'fa-solid fa-stopwatch', label: t('pal_act_pomo'), run: () => clickBtn('pomoBtn') },
+    { kind: 'action', icon: 'fa-solid fa-note-sticky', label: t('pal_act_notes'), run: () => clickBtn('notesBtn') },
+    { kind: 'action', icon: 'fa-solid fa-list-check', label: t('pal_act_tasks'), run: () => clickBtn('tasksBtn') },
+    { kind: 'action', icon: 'fa-solid fa-columns', label: t('pal_act_side'), run: () => openSidePanelNow() },
+    { kind: 'action', icon: 'fa-solid fa-circle-half-stroke', label: t('pal_act_theme'), run: () => cycleTheme() }
+  ];
+}
+function paletteKindLabel(k) {
+  if (k === 'tab') return t('pal_tabs');
+  if (k === 'bookmark') return t('pal_bookmarks');
+  if (k === 'history') return t('pal_history');
+  if (k === 'action') return t('pal_actions');
+  return '';
+}
+function doPaletteSearch(q) {
+  const si = document.getElementById('searchInput');
+  const form = document.getElementById('searchForm');
+  if (si) si.value = q;
+  if (form) form.dispatchEvent(new Event('submit'));
+}
+async function renderPalette(q) {
+  const box = document.getElementById('paletteList');
+  if (!box) return;
+  const seq = ++palSeq;
+  const needle = String(q || '').trim().toLowerCase();
+  const rows = [];
+  paletteActions().forEach((a) => {
+    if (!needle || a.label.toLowerCase().indexOf(needle) !== -1) rows.push(a);
+  });
+  (state.history || []).forEach((h) => {
+    if (needle && String(h).toLowerCase().indexOf(needle) !== -1 && rows.length < 14) {
+      rows.push({ kind: 'history', icon: 'fa-solid fa-history', label: h, run: () => doPaletteSearch(h) });
+    }
+  });
+  try {
+    if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
+      const tabs = await new Promise((res) => { try { chrome.tabs.query({}, (ts) => res(ts || [])); } catch (e) { res([]); } });
+      tabs.forEach((tb) => {
+        if (!tb || !tb.id || rows.length >= 16) return;
+        const title = tb.title || tb.url || '';
+        const url = tb.url || '';
+        if (!title && !url) return;
+        if (needle && title.toLowerCase().indexOf(needle) === -1 && url.toLowerCase().indexOf(needle) === -1) return;
+        rows.push({
+          kind: 'tab', icon: 'fa-solid fa-window-maximize', label: title, sub: url,
+          run: ((id, w) => () => {
+            try {
+              chrome.tabs.update(id, { active: true });
+              if (w !== undefined && chrome.windows) chrome.windows.update(w, { focused: true });
+            } catch (e) {}
+          })(tb.id, tb.windowId)
+        });
+      });
+    }
+  } catch (e) {}
+  try {
+    if (needle && typeof chrome !== 'undefined' && chrome.bookmarks && chrome.bookmarks.search) {
+      const marks = await new Promise((res) => { try { chrome.bookmarks.search(needle, (ms) => res(ms || [])); } catch (e) { res([]); } });
+      marks.forEach((bm) => {
+        if (!bm || !bm.url || rows.length >= 16) return;
+        rows.push({
+          kind: 'bookmark', icon: 'fa-solid fa-bookmark', label: bm.title || bm.url, sub: bm.url,
+          run: ((u) => () => { try { chrome.tabs.create({ url: u }); } catch (e) {} })(bm.url)
+        });
+      });
+    }
+  } catch (e) {}
+  if (needle) {
+    const eng = (window.GaidridEngineName ? window.GaidridEngineName() : 'Google');
+    rows.push({
+      kind: 'search', icon: 'fa-solid fa-magnifying-glass',
+      label: t('pal_search_for').replace('{engine}', eng).replace('{q}', q.trim()),
+      run: () => doPaletteSearch(q.trim())
+    });
+  }
+  palRows = rows.slice(0, 12);
+  palActive = palRows.length ? 0 : -1;
+  if (seq !== palSeq) return;
+  paintPalette();
+}
+function paintPalette() {
+  const box = document.getElementById('paletteList');
+  if (!box) return;
+  if (!palRows.length) {
+    box.innerHTML = '<div class="py-6 text-center text-xs text-gray-400">' + escHtml(t('pal_no_results')) + '</div>';
+    return;
+  }
+  box.innerHTML = palRows.map((r, i) =>
+    '<div data-pal="' + i + '" class="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer text-sm transition-colors ' + (i === palActive ? 'bg-gray-100 dark:bg-white/10' : 'hover:bg-gray-50 dark:hover:bg-white/[0.06]') + '">'
+    + '<i class="' + r.icon + ' text-xs text-gray-400 w-4 text-center shrink-0"></i>'
+    + '<span class="flex-1 truncate text-gray-700 dark:text-gray-200 min-w-0">' + escHtml(r.label)
+    + (r.sub ? '<span class="block text-[10px] text-gray-400 truncate">' + escHtml(r.sub) + '</span>' : '') + '</span>'
+    + (paletteKindLabel(r.kind) ? '<span class="text-[10px] uppercase tracking-wider text-gray-400 shrink-0">' + escHtml(paletteKindLabel(r.kind)) + '</span>' : '')
+    + '</div>'
+  ).join('');
+  box.querySelectorAll('[data-pal]').forEach((el) => {
+    el.addEventListener('click', () => runPalette(+el.getAttribute('data-pal')));
+  });
+}
+function runPalette(i) {
+  const r = palRows[i];
+  if (!r) return;
+  closePalette();
+  try { r.run(); } catch (e) {}
+}
+function ensurePalettePerm() {
+  try {
+    if (typeof chrome === 'undefined' || !chrome.permissions) return;
+    if (state.palettePerm === 'denied' || state.palettePerm === 'granted') return;
+    chrome.permissions.contains({ permissions: ['tabs', 'bookmarks'] }, (has) => {
+      if (chrome.runtime && chrome.runtime.lastError) return;
+      if (has) { state.palettePerm = 'granted'; return; }
+      try {
+        chrome.permissions.request({ permissions: ['tabs', 'bookmarks'] }, (ok) => {
+          state.palettePerm = ok ? 'granted' : 'denied';
+          if (window.GaidridSave) window.GaidridSave();
+          if (ok) {
+            const input = document.getElementById('paletteInput');
+            renderPalette(input ? input.value : '');
+          }
+        });
+      } catch (e) {}
+    });
+  } catch (e) {}
+}
+(function gaidridPalette() {
+  const input = document.getElementById('paletteInput');
+  if (!input) return;
+  let deb = null;
+  input.addEventListener('input', () => {
+    clearTimeout(deb);
+    deb = setTimeout(() => renderPalette(input.value), 120);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (palRows.length) { palActive = (palActive + 1) % palRows.length; paintPalette(); }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (palRows.length) { palActive = (palActive - 1 + palRows.length) % palRows.length; paintPalette(); }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (palActive >= 0) runPalette(palActive);
+      else { const q = input.value.trim(); if (q) { closePalette(); doPaletteSearch(q); } }
+    } else if (e.key === 'Escape') {
+      closePalette();
+    }
+  });
+})();
+
+/* ---- Tasks: tiny todo list linked to the focus timer ---- */
+function openTasks() {
+  const m = document.getElementById('tasksModal');
+  if (!m) return;
+  m.classList.remove('opacity-0', 'pointer-events-none');
+  paintTasks();
+}
+function closeTasks() {
+  const m = document.getElementById('tasksModal');
+  if (m) m.classList.add('opacity-0', 'pointer-events-none');
+}
+function taskList() {
+  return Array.isArray(state.tasks) ? state.tasks : [];
+}
+function paintTasks() {
+  const box = document.getElementById('tasksList');
+  if (box) {
+    const list = taskList();
+    box.innerHTML = list.length ? list.map((tk) =>
+      '<div class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-white/[0.06] border border-gray-100 dark:border-white/10">'
+      + '<button type="button" data-tasktoggle="' + escHtml(tk.id) + '" aria-label="Toggle task" class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ' + (tk.done ? 'bg-google-blue border-google-blue text-white' : 'border-gray-300 dark:border-white/20 text-transparent hover:border-google-blue') + '"><i class="fa-solid fa-check text-[10px]"></i></button>'
+      + '<span class="text-xs flex-1 truncate ' + (tk.done ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-200') + '">' + escHtml(tk.text) + '</span>'
+      + '<button type="button" data-taskdel="' + escHtml(tk.id) + '" aria-label="Delete task" class="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors shrink-0"><i class="fa-solid fa-xmark text-[10px]"></i></button>'
+      + '</div>'
+    ).join('') : '<div class="text-center text-xs text-gray-400 py-6">' + escHtml(t('tasks_empty')) + '</div>';
+  }
+  paintPomoTaskSelect();
+}
+function paintPomoTaskSelect() {
+  const open = taskList().filter((tk) => !tk.done);
+  const cur = state.activeTask && open.some((tk) => tk.id === state.activeTask) ? state.activeTask : '';
+  const label = document.getElementById('taskFieldLabel');
+  if (label) {
+    const found = open.find((tk) => tk.id === cur);
+    label.textContent = found ? found.text.slice(0, 24) : t('pomo_none');
+  }
+  const panel = document.getElementById('taskPanel');
+  if (panel) {
+    panel.innerHTML = '<button type="button" data-taskopt="" class="w-full text-start px-3 py-1.5 text-xs transition-colors ' + (!cur ? 'font-semibold text-google-blue bg-google-blue/10' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10') + '">' + escHtml(t('pomo_none')) + '</button>'
+      + open.map((tk) => '<button type="button" data-taskopt="' + escHtml(tk.id) + '" class="w-full text-start px-3 py-1.5 text-xs truncate transition-colors ' + (tk.id === cur ? 'font-semibold text-google-blue bg-google-blue/10' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10') + '">' + escHtml(tk.text) + '</button>').join('');
+  }
+  if (state.activeTask !== cur) {
+    state.activeTask = cur || null;
+    if (window.GaidridSave) window.GaidridSave();
+  }
+}
+/* Shared closer for the custom dropdowns (language, task). */
+function closeDropdowns() {
+  let closed = false;
+  ['langPanel', 'taskPanel'].forEach((id) => {
+    const p = document.getElementById(id);
+    if (p && !p.classList.contains('hidden')) { p.classList.add('hidden'); closed = true; }
+  });
+  return closed;
+}
+function addTask(text) {
+  const v = String(text || '').trim().slice(0, 120);
+  if (!v) return false;
+  const list = taskList().slice(-49);
+  list.push({ id: 't' + Date.now().toString(36), text: v, done: false });
+  state.tasks = list;
+  paintTasks();
+  if (window.GaidridSave) window.GaidridSave();
+  return true;
+}
+(function gaidridTasks() {
+  const open = document.getElementById('tasksBtn');
+  if (open) open.addEventListener('click', openTasks);
+  const c = document.getElementById('closeTasksBtn');
+  if (c) c.addEventListener('click', closeTasks);
+  const input = document.getElementById('tasksInput');
+  const add = document.getElementById('tasksAddBtn');
+  const doAdd = () => {
+    if (!input) return;
+    if (addTask(input.value)) input.value = '';
+    else if (input) input.focus();
+  };
+  if (add) add.addEventListener('click', doAdd);
+  if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doAdd(); });
+  const box = document.getElementById('tasksList');
+  if (box) box.addEventListener('click', (e) => {
+    const tg = e.target && e.target.closest ? e.target.closest('[data-tasktoggle]') : null;
+    const del = e.target && e.target.closest ? e.target.closest('[data-taskdel]') : null;
+    if (!tg && !del) return;
+    const id = (tg || del).getAttribute(tg ? 'data-tasktoggle' : 'data-taskdel');
+    let list = taskList();
+    if (tg) list = list.map((tk) => (tk.id === id ? { id: tk.id, text: tk.text, done: !tk.done } : tk));
+    else {
+      list = list.filter((tk) => tk.id !== id);
+      if (state.activeTask === id) state.activeTask = null;
+    }
+    state.tasks = list;
+    paintTasks();
+    if (window.GaidridSave) window.GaidridSave();
+  });
+  const clr = document.getElementById('tasksClearBtn');
+  if (clr) clr.addEventListener('click', () => {
+    const open = taskList().filter((tk) => !tk.done);
+    if (state.activeTask && !open.some((tk) => tk.id === state.activeTask)) state.activeTask = null;
+    state.tasks = open;
+    paintTasks();
+    if (window.GaidridSave) window.GaidridSave();
+  });
+})();
+
+/* ---- Focus stats: sessions per day, week total, streak (all local) ---- */
+function pomoDayStr(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function recordPomoSession() {
+  const k = pomoDayStr(new Date());
+  const s = (state.pomoStats && typeof state.pomoStats === 'object') ? state.pomoStats : {};
+  s[k] = (s[k] || 0) + 1;
+  const cut = new Date();
+  cut.setDate(cut.getDate() - 62);
+  const cutoff = pomoDayStr(cut);
+  Object.keys(s).forEach((key) => { if (key < cutoff) delete s[key]; });
+  state.pomoStats = s;
+  paintPomoStats();
+  if (window.GaidridSave) window.GaidridSave();
+}
+// Consecutive active days ending today (or yesterday) — pure, tested.
+function pomoStreak(stats, todayStr) {
+  const s = stats || {};
+  const has = (ds) => (s[ds] || 0) > 0;
+  const parts = String(todayStr).split('-').map(Number);
+  const base = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
+  let start = has(pomoDayStr(base)) ? base : new Date(base.getTime() - 86400000);
+  if (!has(pomoDayStr(start))) return 0;
+  let n = 0;
+  let d = start;
+  while (has(pomoDayStr(d))) { n++; d = new Date(d.getTime() - 86400000); }
+  return n;
+}
+function pomoWeekCount(stats, todayStr) {
+  const s = stats || {};
+  const parts = String(todayStr).split('-').map(Number);
+  const base = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1).getTime();
+  let n = 0;
+  for (let i = 0; i < 7; i++) n += s[pomoDayStr(new Date(base - i * 86400000))] || 0;
+  return n;
+}
+function paintPomoStats() {
+  const el = document.getElementById('pomoStats');
+  if (!el) return;
+  const s = state.pomoStats || {};
+  const today = pomoDayStr(new Date());
+  el.textContent = t('pomo_today') + ': ' + (s[today] || 0) + ' · ' + t('pomo_week') + ': ' + pomoWeekCount(s, today) + ' · ' + t('pomo_streak') + ': ' + pomoStreak(s, today);
+}
+
 /* ---- Custom time picker for the night schedule (replaces the native time input) ---- */
 (function gaidridTimePicker() {
   const panel = document.getElementById('timePickerPanel');
@@ -2168,7 +2721,7 @@ function paintThemeSeg() {
 
   function renderCols() {
     hoursCol.innerHTML = HOURS.map((h) => {
-      const label = state.use24Hour ? (h < 10 ? '0' + h : h) : ((h % 12) || 12) + (h >= 12 ? ' PM' : ' AM');
+      const label = state.use24Hour ? (h < 10 ? '0' + h : h) : ((h % 12) || 12) + ' ' + dayPeriod(h);
       return '<button type="button" data-h="' + h + '" class="' + itemCls + '">' + label + '</button>';
     }).join('');
     minutesCol.innerHTML = MINUTES.map((m) => '<button type="button" data-m="' + m + '" class="' + itemCls + '">' + (m < 10 ? '0' + m : m) + '</button>').join('');
@@ -2226,7 +2779,13 @@ function paintThemeSeg() {
 })();
 
 /* ---- Pomodoro modal wiring ---- */
-function openPomo() { const m = document.getElementById('pomoModal'); if (m) m.classList.remove('opacity-0', 'pointer-events-none'); }
+function openPomo() {
+  const m = document.getElementById('pomoModal');
+  if (!m) return;
+  m.classList.remove('opacity-0', 'pointer-events-none');
+  paintPomoStats();
+  paintPomoTaskSelect();
+}
 function closePomo() { const m = document.getElementById('pomoModal'); if (m) m.classList.add('opacity-0', 'pointer-events-none'); }
 (function gaidridPomo() {
   const b = document.getElementById('pomoBtn');
@@ -2280,6 +2839,7 @@ function applyImportedPrefs(prefs) {
   fetchLiveWeather(state.weatherLocation || 'Cairo');
   refreshSportsHome();
   refreshNewsHome();
+  if (typeof applyI18n === 'function') applyI18n();
   if (window.GaidridSave) window.GaidridSave();
 }
 (function gaidridBackup() {
@@ -2296,8 +2856,8 @@ function applyImportedPrefs(prefs) {
       a.download = 'gaidrid-backup.json';
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-      say('Backup exported');
-    } catch (e) { say('Export failed'); }
+      say(t('backup_done'));
+    } catch (e) { say(t('backup_fail')); }
   });
   if (imp && file) {
     imp.addEventListener('click', () => file.click());
@@ -2311,7 +2871,7 @@ function applyImportedPrefs(prefs) {
           if (!data || data.app !== 'Gaidrid' || !data.prefs) throw new Error('bad file');
           if (typeof data.version === 'number' && data.version > 1) throw new Error('newer backup format');
           applyImportedPrefs(data.prefs);
-          say('Backup imported from ' + (data.exportedAt || 'file'));
+          say(t('backup_imported') + (data.exportedAt || 'file'));
         } catch (e) { say('Invalid backup file'); }
         file.value = '';
       };
@@ -2326,14 +2886,14 @@ function applyImportedPrefs(prefs) {
   const box = document.getElementById('appIconResults');
   const hidden = document.getElementById('appIconInput');
   if (!input || !box || !hidden) return;
-  let t = null;
+  let debT = null;
   let ctl = null;
   input.addEventListener('input', () => {
     const q = input.value.trim();
-    clearTimeout(t);
+    clearTimeout(debT);
     if (ctl) ctl.abort();
     if (q.length < 2) { box.classList.add('hidden'); box.innerHTML = ''; return; }
-    t = setTimeout(async () => {
+    debT = setTimeout(async () => {
       try {
         ctl = new AbortController();
         const res = await fetch('https://api.iconify.design/search?query=' + encodeURIComponent(q) + '&limit=24', { signal: ctl.signal });
@@ -2395,7 +2955,7 @@ function topTileHTML(s, idx) {
   const iconBox = '<span class="relative w-9 h-9 rounded-2xl bg-white dark:bg-white/[0.07] border border-gray-200/60 dark:border-white/10 shadow-xs flex items-center justify-center overflow-hidden">' + letterSpan + fav + '</span>';
   const titleBox = '<span class="text-[11px] text-gray-500 dark:text-gray-400 truncate w-full text-center"><span class="marq">' + escHtml(label) + '</span></span>';
   return '<a href="' + escHtml(s.url) + '" class="group relative flex flex-col items-center gap-1.5 w-16 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all">'
-    + '<span class="absolute top-1 right-1.5 text-[9px] font-bold text-gray-300 dark:text-gray-600">' + (idx + 1) + '</span>'
+    + '<span class="absolute top-1 end-1.5 text-[9px] font-bold text-gray-300 dark:text-gray-600">' + (idx + 1) + '</span>'
     + iconBox + titleBox + '</a>';
 }
 
@@ -2434,12 +2994,12 @@ function gaidridTyping() {
   return !!ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
 }
 function gaidridModalOpen() {
-  const ids = ['settingsModal', 'addAppModal', 'voiceModal', 'notesModal', 'pomoModal', 'aboutModal', 'onboardModal'];
+  const ids = ['settingsModal', 'addAppModal', 'voiceModal', 'notesModal', 'pomoModal', 'aboutModal', 'onboardModal', 'tasksModal', 'paletteModal'];
   for (const id of ids) {
     const m = document.getElementById(id);
     if (m && !m.classList.contains('opacity-0')) return true;
   }
-  if (typeof appsDrawer !== 'undefined' && appsDrawer && !appsDrawer.classList.contains('translate-x-full')) return true;
+  if (typeof appsDrawer !== 'undefined' && appsDrawer && !appsDrawer.classList.contains('translate-x-full') && !appsDrawer.classList.contains('-translate-x-full')) return true;
   return false;
 }
 
@@ -2552,10 +3112,10 @@ function sportsSelectedDate() {
   return d;
 }
 function sportsDayLabel() {
-  if (state.sportsDay === 0) return 'Today';
-  if (state.sportsDay === -1) return 'Yesterday';
-  if (state.sportsDay === 1) return 'Tomorrow';
-  return sportsSelectedDate().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  if (state.sportsDay === 0) return t('sports_today');
+  if (state.sportsDay === -1) return t('sports_yesterday');
+  if (state.sportsDay === 1) return t('sports_tomorrow');
+  return sportsSelectedDate().toLocaleDateString(localeTag(), { weekday: 'short', month: 'short', day: 'numeric' });
 }
 /* ESPN buckets ?dates= by the US/Eastern calendar day, not the viewer's. One
    local day therefore covers one ET date for US/Eastern users and two for
@@ -2627,11 +3187,11 @@ function paintSportsDay() {
   if (el) el.textContent = sportsDayLabel();
 }
 function sportsTeamOf(c, hideScore) {
-  const t = (c && c.team) || {};
+  const tm = (c && c.team) || {};
   return {
-    id: String(t.id || ''),
-    name: t.shortDisplayName || t.abbreviation || t.displayName || '?',
-    logo: t.logo || '',
+    id: String(tm.id || ''),
+    name: tm.shortDisplayName || tm.abbreviation || tm.displayName || '?',
+    logo: tm.logo || '',
     score: hideScore ? '' : ((c && c.score) || ''),
     record: (c && c.records && c.records[0] && c.records[0].summary) || ''
   };
@@ -2669,7 +3229,7 @@ function sportsEventContext(ev, comp, sport) {
     }
     const sp = sport || (sportsLeague() || {}).sport;
     if (sp === 'football' && ev && ev.week && ev.week.number) {
-      return 'Week ' + ev.week.number;
+      return t('week_label').replace('{n}', ev.week.number);
     }
   } catch (e) {}
   return '';
@@ -2682,7 +3242,7 @@ function sportsLocalWhen(m) {
   const opts = sameDay
     ? { hour: 'numeric', minute: '2-digit' }
     : { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
-  try { return d.toLocaleString('en-US', opts); } catch (e) { return m.detail || ''; }
+  try { return d.toLocaleString(localeTag(), opts); } catch (e) { return m.detail || ''; }
 }
 function sportsStatusHTML(m) {
   if (m.state === 'in') {
@@ -2723,7 +3283,7 @@ function sportsTeamRow(t, opp, decided) {
   return '<div class="flex items-center gap-2.5">'
     + '<img loading="lazy" data-tlogo src="' + t.logo + '" alt="" class="w-6 h-6 object-contain shrink-0">'
     + '<span class="text-sm ' + nameCls + ' truncate min-w-0 flex-1">' + escHtml(t.name) + '</span>'
-    + '<span class="ml-auto text-right leading-tight shrink-0 w-11">' + right + '</span>' + sportsFavBtnHTML(t) + '</div>';
+    + '<span class="ms-auto text-end leading-tight shrink-0 w-11">' + right + '</span>' + sportsFavBtnHTML(t) + '</div>';
 }
 function sportsMatchHTML(m) {
   const decided = m.state === 'post';
@@ -2754,7 +3314,7 @@ function renderSportsMatches(list) {
   const hidden = !visible.length && sorted.length > 0;
   box.innerHTML = visible.length
     ? visible.map((m) => sportsMatchHTML(m)).join('')
-    : '<div class="text-center text-xs text-gray-400 py-10">' + (hidden ? 'No upcoming ' : 'No ') + escHtml(lg.full) + ' matches on this day<br><a href="https://www.espn.com/' + lg.site + '" target="_blank" rel="noopener" class="inline-block mt-2 text-google-blue dark:text-[#8AB4F8] hover:underline">Check on ESPN.com</a></div>';
+    : '<div class="text-center text-xs text-gray-400 py-10">' + escHtml((hidden ? t('sports_no_upcoming') : t('sports_no_matches')).replace('{league}', lg.full)) + '<br><a href="https://www.espn.com/' + lg.site + '" target="_blank" rel="noopener" class="inline-block mt-2 text-google-blue dark:text-[#8AB4F8] hover:underline">' + escHtml(t('sports_check_espn')) + '</a></div>';
   wireSportsLogos(box);
 }
 function wireSportsLogos(box) {
@@ -2766,7 +3326,7 @@ function wireSportsLogos(box) {
 }
 function renderSportsError() {
   const box = document.getElementById('sportsBody');
-  if (box) box.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">Could not load ' + (sportsTab === 'table' ? 'standings' : 'scores') + ' — check connection<br><span class="text-[11px]">Use the refresh button to try again</span></div>';
+  if (box) box.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">' + escHtml(t('sports_load_fail').replace('{what}', sportsTab === 'table' ? t('sports_table') : t('sports_matches'))) + '<br><span class="text-[11px]">' + escHtml(t('sports_try_refresh')) + '</span></div>';
 }
 let sportsRenderKey = '';
 let sportsLastRender = null;
@@ -2777,8 +3337,8 @@ function sportsStamp() {
   const now = new Date();
   const h = now.getHours();
   const hh = String(state.use24Hour ? h : (h % 12 || 12)).padStart(2, '0');
-  return 'Updated ' + hh + ':' + String(now.getMinutes()).padStart(2, '0')
-    + (state.use24Hour ? '' : (h >= 12 ? ' PM' : ' AM'));
+  return t('updated_stamp') + hh + ':' + String(now.getMinutes()).padStart(2, '0')
+    + (state.use24Hour ? '' : ' ' + dayPeriod(h));
 }
 function repaintSports() {
   const key = sportsKeyStr();
@@ -2795,7 +3355,7 @@ async function fetchSports() {
   paintSportsLeagues();
   paintSportsDay();
   const title = document.getElementById('sportsTitle');
-  if (title) title.textContent = sportsTab === 'favs' ? 'Favorite Teams' : ((sportsLeague() || {}).full || 'Sports');
+  if (title) title.textContent = sportsTab === 'favs' ? t('sports_favs') : ((sportsLeague() || {}).full || t('sports_title'));
   const box = document.getElementById('sportsBody');
   const up = document.getElementById('sportsUpdated');
   const key = sportsKeyStr();
@@ -2850,7 +3410,7 @@ async function fetchSports() {
     if (up) up.textContent = sportsStamp();
   } catch (e) {
     if (e && e.name !== 'AbortError') {
-      if (sameKey && box && box.childElementCount) { if (up) up.textContent = "Couldn't refresh"; }
+      if (sameKey && box && box.childElementCount) { if (up) up.textContent = t('sports_couldnt'); }
       else renderSportsError();
     }
   } finally {
@@ -2902,10 +3462,10 @@ function favLiveCount(list, favIds) {
 function nextFavMatch(list, favIds, now) {
   const set = new Set((Array.isArray(favIds) ? favIds : [favIds]).filter((x) => x !== undefined && x !== null && x !== '').map(String));
   if (!set.size) return null;
-  const t = (typeof now === 'number') ? now : Date.now();
+  const nowMs = (typeof now === 'number') ? now : Date.now();
   const mine = (list || []).filter((m) => m && m.state === 'pre'
     && (set.has(String((m.home || {}).id || '')) || set.has(String((m.away || {}).id || '')))
-    && m.date && new Date(m.date).getTime() >= t - 7200000);
+    && m.date && new Date(m.date).getTime() >= nowMs - 7200000);
   mine.sort((a, b) => new Date(a.date) - new Date(b.date));
   return mine[0] || null;
 }
@@ -2967,9 +3527,9 @@ async function refreshSportsHome() {
         const opp = isHome ? best.m.away.name : best.m.home.name;
         const d = new Date(best.m.date);
         const chipDay = d.toDateString() === today.toDateString() ? 0 : 1;
-        const t = d.toLocaleString('en-US', state.use24Hour ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', minute: '2-digit' });
+        const timeStr = d.toLocaleString(localeTag(), state.use24Hour ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', minute: '2-digit' });
         const label = document.getElementById('favMatchLabel');
-        if (label) label.textContent = best.fav.name + (isHome ? ' vs ' : ' at ') + opp + ' · ' + (chipDay === 0 ? 'Today ' : 'Tomorrow ') + t;
+        if (label) label.textContent = best.fav.name + (isHome ? ' vs ' : ' at ') + opp + ' · ' + (chipDay === 0 ? t('fav_chip_today') : t('fav_chip_tomorrow')) + ' ' + timeStr;
         chip.classList.remove('hidden');
         chip.classList.add('flex');
         chip.onclick = () => { state.sportsLeague = best.key; openSports(chipDay); };
@@ -3084,8 +3644,8 @@ function feedItemImg(n, baseUrl) {
     const contents = n.getElementsByTagName('media:content');
     for (const c of contents) {
       const u = pick(c);
-      const t = (c.getAttribute('type') || '') + ' ' + u;
-      if (/image|\.jpe?g|\.png|\.webp|\.gif/i.test(t)) { raw = u; break; }
+      const typeStr = (c.getAttribute('type') || '') + ' ' + u;
+      if (/image|\.jpe?g|\.png|\.webp|\.gif/i.test(typeStr)) { raw = u; break; }
     }
   }
   if (!raw) {
@@ -3175,17 +3735,17 @@ async function fetchNews() {
   const box = document.getElementById('newsList');
   if (!box) return;
   if (!(await hasNewsPerm())) {
-    box.innerHTML = '<div class="py-6 text-center"><p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Allow site access to load RSS feeds from the web</p>'
-      + '<button type="button" id="newsEnableBtn" class="px-4 py-2 rounded-xl bg-google-blue text-white text-xs font-semibold hover:bg-blue-600 transition-all">Enable news access</button></div>';
+    box.innerHTML = '<div class="py-6 text-center"><p class="text-sm text-gray-500 dark:text-gray-400 mb-3">' + escHtml(t('news_enable_title')) + '</p>'
+      + '<button type="button" id="newsEnableBtn" class="px-4 py-2 rounded-xl bg-google-blue text-white text-xs font-semibold hover:bg-blue-600 transition-all">' + escHtml(t('news_enable_btn')) + '</button></div>';
     const eb = document.getElementById('newsEnableBtn');
     if (eb) eb.addEventListener('click', async () => { if (await requestNewsPerm()) fetchNews(); });
     return;
   }
   if (!state.newsFeeds.length) {
-    box.innerHTML = '<div class="py-6 text-center text-sm text-gray-400">No feeds yet — add one in settings</div>';
+    box.innerHTML = '<div class="py-6 text-center text-sm text-gray-400">' + escHtml(t('news_empty_feeds')) + '</div>';
     return;
   }
-  box.innerHTML = '<div class="flex items-center justify-center gap-2 py-6 text-xs text-gray-400"><i class="fa-solid fa-circle-notch animate-spin"></i>Loading feeds&hellip;</div>';
+  box.innerHTML = '<div class="flex items-center justify-center gap-2 py-6 text-xs text-gray-400"><i class="fa-solid fa-circle-notch animate-spin"></i>' + escHtml(t('news_loading')) + '&hellip;</div>';
   if (newsCtl) newsCtl.abort();
   newsCtl = new AbortController();
   const signal = newsCtl.signal;
@@ -3194,15 +3754,15 @@ async function fetchNews() {
   const items = data.items;
   const failed = data.failed;
   if (!items.length && failed.length) {
-    box.innerHTML = '<div class="py-6 text-center"><p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Couldn\'t load feeds: ' + escHtml(failed.join(', ')) + '</p>'
-      + '<button type="button" id="newsRetryBtn" class="mt-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/[0.06] text-xs font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 transition-all">Retry</button></div>';
+    box.innerHTML = '<div class="py-6 text-center"><p class="text-sm text-gray-500 dark:text-gray-400 mb-1">' + escHtml(t('news_failed')) + escHtml(failed.join(', ')) + '</p>'
+      + '<button type="button" id="newsRetryBtn" class="mt-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/[0.06] text-xs font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 transition-all">' + escHtml(t('news_retry')) + '</button></div>';
     const rb = document.getElementById('newsRetryBtn');
     if (rb) rb.addEventListener('click', fetchNews);
     return;
   }
   items.sort((a, b) => b.ts - a.ts);
   newsAll = items;
-  newsWarn = failed.length ? '<div class="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-700 dark:text-amber-300">Couldn\'t load: ' + escHtml(failed.join(', ')) + '</div>' : '';
+  newsWarn = failed.length ? '<div class="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-700 dark:text-amber-300">' + escHtml(t('news_failed_one')) + escHtml(failed.join(', ')) + '</div>' : '';
   renderNewsList();
 }
 function wireNewsImgs(box) {
@@ -3239,18 +3799,18 @@ function renderNewsList() {
   const s = document.getElementById('newsSearchWrap');
   if (s) s.classList.toggle('hidden', !newsAll.length && !q);
   if (!newsItems.length) {
-    box.innerHTML = newsWarn + '<div class="py-6 text-center text-sm text-gray-400">' + (newsAll.length ? 'No stories match' : 'No stories') + '</div>';
+    box.innerHTML = newsWarn + '<div class="py-6 text-center text-sm text-gray-400">' + escHtml(newsAll.length ? t('news_nomatch') : t('news_empty')) + '</div>';
     return;
   }
   box.innerHTML = newsWarn + newsItems.map((it, i) => {
     const d = it.ts ? new Date(it.ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
-    return '<button type="button" data-news-idx="' + i + '" class="w-full text-left px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-white/[0.06] border border-gray-100 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 transition-all">'
+    return '<button type="button" data-news-idx="' + i + '" class="w-full text-start px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-white/[0.06] border border-gray-100 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 transition-all">'
       + '<div class="flex gap-3 items-start">'
       + '<div class="min-w-0 flex-1">'
       + '<div class="flex items-center gap-2 mb-0.5">'
       + (!isNewsRead(it.link) ? '<span class="news-unread w-1.5 h-1.5 rounded-full bg-google-blue shrink-0"></span>' : '')
       + '<span class="text-[10px] font-bold uppercase tracking-wider text-google-blue truncate">' + escHtml(it.source) + '</span>'
-      + '<span class="text-[10px] text-gray-400 ml-auto shrink-0">' + escHtml(d) + '</span></div>'
+      + '<span class="text-[10px] text-gray-400 ms-auto shrink-0">' + escHtml(d) + '</span></div>'
       + '<div class="text-sm font-medium text-gray-800 dark:text-gray-100 leading-snug">' + escHtml(it.title) + '</div>'
       + '</div>'
       + (it.img ? '<img src="' + escHtml(it.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer" class="w-14 h-14 rounded-lg object-cover shrink-0 bg-gray-100 dark:bg-white/10">' : '')
@@ -3304,7 +3864,7 @@ async function openArticle(idx) {
   if (openTab) openTab.setAttribute('href', item.link);
   if (!art) return;
   art.classList.remove('hidden');
-  art.innerHTML = '<div class="flex items-center justify-center gap-2 py-6 text-xs text-gray-400"><i class="fa-solid fa-circle-notch animate-spin"></i>Loading article&hellip;</div>';
+  art.innerHTML = '<div class="flex items-center justify-center gap-2 py-6 text-xs text-gray-400"><i class="fa-solid fa-circle-notch animate-spin"></i>' + escHtml(t('news_reading')) + '</div>';
   if (newsArticleCtl) newsArticleCtl.abort();
   newsArticleCtl = new AbortController();
   let content = '';
@@ -3332,11 +3892,11 @@ async function openArticle(idx) {
     title = parsed.title || title;
   } catch (e) {
     if (e && e.name === 'AbortError') return;
-    content = '<div class="py-4 text-center"><p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Couldn\'t load this article in reading mode.</p>'
-      + '<p class="text-xs text-gray-400">Use "Open in new tab" to read it on the source site.</p></div>';
+    content = '<div class="py-4 text-center"><p class="text-sm text-gray-500 dark:text-gray-400 mb-1">' + escHtml(t('news_load_fail')) + '</p>'
+      + '<p class="text-xs text-gray-400">' + escHtml(t('news_open_tab_hint')) + '</p></div>';
   }
   const mins = newsReadMins(title + ' ' + String(content).replace(/<[^>]+>/g, ' '));
-  art.innerHTML = '<div class="text-[10px] font-bold uppercase tracking-wider text-google-blue mb-1">' + escHtml(item.source) + (mins ? ' · ~' + mins + ' min read' : '') + '</div>'
+  art.innerHTML = '<div class="text-[10px] font-bold uppercase tracking-wider text-google-blue mb-1">' + escHtml(item.source) + (mins ? ' · ~' + mins + ' ' + escHtml(t('news_min_read')) : '') + '</div>'
     + '<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3 leading-snug">' + escHtml(title) + '</h2>'
     + '<div class="article-body text-sm text-gray-700 dark:text-gray-300 leading-relaxed">' + content + '</div>';
   applyNewsFont();
@@ -3482,10 +4042,10 @@ async function fetchSportsTableData(lg, signal) {
       const fresh = {};
       await Promise.all(missing.map(async (tid) => {
         try {
-          const t = await fetchJSON(espnHttps(idSet[tid]), signal);
+          const team = await fetchJSON(espnHttps(idSet[tid]), signal);
           fresh[tid] = {
-            name: t.shortDisplayName || t.abbreviation || t.displayName || ('#' + tid),
-            logo: (t.logos && t.logos[0] && t.logos[0].href) || ''
+            name: team.shortDisplayName || team.abbreviation || team.displayName || ('#' + tid),
+            logo: (team.logos && team.logos[0] && team.logos[0].href) || ''
           };
         } catch (e) { if (e && e.name === 'AbortError') throw e; }
       }));
@@ -3542,7 +4102,7 @@ function renderSportsTable(groups, cols) {
   cols = cols || [['P', 'p'], ['W', 'w'], ['D', 'd'], ['L', 'l'], ['Pts', 'pts']];
   if (!groups.length) {
     const lg = sportsLeague();
-    box.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">No standings for ' + escHtml(lg.full) + ' yet<br><span class="text-[11px]">Use the refresh button to try again</span></div>';
+    box.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">' + escHtml(t('sports_no_table').replace('{league}', lg.full)) + '<br><span class="text-[11px]">' + escHtml(t('sports_try_refresh')) + '</span></div>';
     return;
   }
   const tpl = '1fr repeat(' + cols.length + ',28px)';
@@ -3633,7 +4193,7 @@ function renderFavTab() {
     teams: ((state.sportsFav || {})[l.key] || []).filter((t) => t && t.id)
   })).filter((g) => g.teams.length);
   if (!groups.length) {
-    box.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">No starred teams yet<br><span class="text-[11px]">Tap the star on any team to keep it here</span><br><button type="button" data-favbrowse="1" class="inline-block mt-3 px-4 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-all">Browse matches</button></div>';
+    box.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">' + escHtml(t('sports_fav_empty')) + '<br><span class="text-[11px]">' + escHtml(t('sports_fav_empty_hint')) + '</span><br><button type="button" data-favbrowse="1" class="inline-block mt-3 px-4 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-all">' + escHtml(t('sports_browse')) + '</button></div>';
     return;
   }
   box.innerHTML = groups.map((g) =>
@@ -3708,7 +4268,7 @@ function paintNewsSettings() {
   const box = document.getElementById('newsFeedsList');
   if (box) {
     if (!state.newsFeeds.length) {
-      box.innerHTML = '<div class="text-xs text-gray-400 px-1">No feeds yet</div>';
+      box.innerHTML = '<div class="text-xs text-gray-400 px-1">' + escHtml(t('news_none')) + '</div>';
     } else {
       box.innerHTML = state.newsFeeds.map((f, i) =>
         '<div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/[0.06] border border-gray-100 dark:border-white/10">'
@@ -3740,14 +4300,14 @@ function paintNewsSettings() {
     const raw = (input.value || '').trim();
     let u = null;
     try { u = new URL(raw); } catch (e) {}
-    if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) { sayErr('Enter a valid http(s) feed URL'); return; }
+    if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) { sayErr(t('news_err_url')); return; }
     if (err) err.classList.add('hidden');
     if (state.newsFeeds.some((f) => f.url === u.href)) { input.value = ''; return; }
     if (add) add.disabled = true;
     try {
       // Verify the feed is readable before adding, and take its real title.
       if (!(await hasNewsPerm())) {
-        if (!(await requestNewsPerm())) { sayErr('Allow site access first, then try again'); return; }
+        if (!(await requestNewsPerm())) { sayErr(t('news_err_perm')); return; }
       }
       const res = await fetch(u.href);
       if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -3757,8 +4317,8 @@ function paintNewsSettings() {
       try {
         const doc = new DOMParser().parseFromString(xml, 'text/xml');
         if (!doc.querySelector('parsererror')) {
-          const t = doc.querySelector('channel > title, feed > title');
-          if (t && t.textContent.trim()) name = t.textContent.trim().slice(0, 60);
+          const titleEl = doc.querySelector('channel > title, feed > title');
+          if (titleEl && titleEl.textContent.trim()) name = titleEl.textContent.trim().slice(0, 60);
         }
       } catch (e) {}
       state.newsFeeds.push({ name, url: u.href, builtin: false });
@@ -3767,7 +4327,7 @@ function paintNewsSettings() {
       if (window.GaidridSave) window.GaidridSave();
       refreshNewsHome();
     } catch (e) {
-      sayErr("Couldn't read a valid feed at this URL");
+      sayErr(t('news_err_read'));
     } finally {
       if (add) add.disabled = false;
     }
