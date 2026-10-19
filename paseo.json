@@ -1,0 +1,15 @@
+{
+  "worktree": {
+    "setup": "npm ci"
+  },
+  "scripts": {
+    "check": { "command": "node --check js/app.js && node --check js/i18n.js && node --check js/theme-init.js && node --check js/background.js && node --check js/config.js" },
+    "build": { "command": "npm run build" },
+    "preview": { "type": "service", "command": "python3 -m http.server $PASEO_PORT --directory ." }
+  },
+  "metadataGeneration": {
+    "branchName": { "instructions": "Prefix branches with feat/ or fix/ and a short kebab-case description (e.g. fix/sports-refresh, feat/rss-filter). No personal prefixes." },
+    "commitMessage": { "instructions": "One short sentence describing the change (e.g. newtab: add RTL marquee). Releases are separate commits titled vN.N.N: <summary>." },
+    "pullRequest": { "instructions": "Describe what changed and why. Link related issues. For UI changes attach before/after screenshots. No personal data in screenshots or logs." }
+  }
+}
