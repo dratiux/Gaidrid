@@ -95,11 +95,6 @@ Required store assets not in
 this repo: promo tile (440×280), screenshots (1280×800 or 640×400),
 listing description, and the hosted [`PRIVACY.md`](PRIVACY.md) URL.
 
-## License
-
-[MIT](LICENSE) © 2026 dratiux. Third-party components keep their own
-licenses — see [NOTICE](NOTICE).
-
 ---
 
 <p align="center">
